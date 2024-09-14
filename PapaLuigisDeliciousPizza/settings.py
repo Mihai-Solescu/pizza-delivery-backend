@@ -37,6 +37,12 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'customers',
+    'delivery',
+    'menu',
+    'orders',
+    'PapaLuigisDeliciousPizza',
+
 ]
 
 MIDDLEWARE = [
