@@ -14,18 +14,18 @@ class Pizza(models.Model):
     base_id = models.ForeignKey('menu.PizzaBase', on_delete=models.CASCADE)
     price = models.DecimalField(decimal_places=3, max_digits=8) # Ingredient + labor cost + Profit margin
     user_id = models.ForeignKey('customers.Customer', on_delete=models.SET_NULL, null=True, blank=True)
-    menu_item_id = models.ForeignKey('menu.MenuItem', on_delete=models.CASCADE)
+    menu_item_id = models.ForeignKey('menu.MenuItem', on_delete=models.CASCADE, related_name='pizzas')
 
 
 class Drink(models.Model):
     name = models.CharField(max_length=30)
     price = models.DecimalField(decimal_places=3, max_digits=8)
-    menu_item = models.ForeignKey('menu.MenuItem', on_delete=models.CASCADE)
+    menu_item = models.ForeignKey('menu.MenuItem', on_delete=models.CASCADE, related_name='drinks')
 
-class Desert(models.Model):
+class Dessert(models.Model):
     name = models.CharField(max_length=30)
     price = models.DecimalField(decimal_places=3, max_digits=8)
-    menu_item = models.ForeignKey('menu.MenuItem', on_delete=models.CASCADE)
+    menu_item = models.ForeignKey('menu.MenuItem', on_delete=models.CASCADE, related_name='desserts')
 
 
 class MenuItem(models.Model):
