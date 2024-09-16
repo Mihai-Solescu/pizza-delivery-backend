@@ -22,33 +22,6 @@ paths:
                 items:
                   $ref: '#/components/schemas/Ingredient'
           description: ''
-    post:
-      operationId: menu_ingredient_create
-      tags:
-      - menu
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/Ingredient'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/Ingredient'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/Ingredient'
-        required: true
-      security:
-      - cookieAuth: []
-      - basicAuth: []
-      - {}
-      responses:
-        '201':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Ingredient'
-          description: ''
   /api/menu/ingredient/{id}/:
     get:
       operationId: menu_ingredient_retrieve
@@ -72,29 +45,16 @@ paths:
               schema:
                 $ref: '#/components/schemas/Ingredient'
           description: ''
-    put:
-      operationId: menu_ingredient_update
+  /api/menu/menuItem/:
+    get:
+      operationId: menu_menuItem_list
       parameters:
-      - in: path
-        name: id
+      - in: query
+        name: type
         schema:
-          type: integer
-        description: A unique integer value identifying this ingredient.
-        required: true
+          type: string
       tags:
       - menu
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/Ingredient'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/Ingredient'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/Ingredient'
-        required: true
       security:
       - cookieAuth: []
       - basicAuth: []
@@ -104,30 +64,22 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Ingredient'
+                type: array
+                items:
+                  $ref: '#/components/schemas/MenuItem'
           description: ''
-    patch:
-      operationId: menu_ingredient_partial_update
+  /api/menu/menuItem/{id}/:
+    get:
+      operationId: menu_menuItem_retrieve
       parameters:
       - in: path
         name: id
         schema:
           type: integer
-        description: A unique integer value identifying this ingredient.
+        description: A unique integer value identifying this menu item.
         required: true
       tags:
       - menu
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/PatchedIngredient'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/PatchedIngredient'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/PatchedIngredient'
       security:
       - cookieAuth: []
       - basicAuth: []
@@ -137,26 +89,8 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Ingredient'
+                $ref: '#/components/schemas/MenuItem'
           description: ''
-    delete:
-      operationId: menu_ingredient_destroy
-      parameters:
-      - in: path
-        name: id
-        schema:
-          type: integer
-        description: A unique integer value identifying this ingredient.
-        required: true
-      tags:
-      - menu
-      security:
-      - cookieAuth: []
-      - basicAuth: []
-      - {}
-      responses:
-        '204':
-          description: No response body
   /api/menu/pizza/:
     get:
       operationId: menu_pizza_list
@@ -174,33 +108,6 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/Pizza'
-          description: ''
-    post:
-      operationId: menu_pizza_create
-      tags:
-      - menu
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/Pizza'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/Pizza'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/Pizza'
-        required: true
-      security:
-      - cookieAuth: []
-      - basicAuth: []
-      - {}
-      responses:
-        '201':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Pizza'
           description: ''
   /api/menu/pizza/{pizza_id}/:
     get:
@@ -225,28 +132,113 @@ paths:
               schema:
                 $ref: '#/components/schemas/Pizza'
           description: ''
-    put:
-      operationId: menu_pizza_update
-      parameters:
-      - in: path
-        name: pizza_id
-        schema:
-          type: integer
-        description: A unique integer value identifying this pizza.
-        required: true
+  /api/orders/earnings/:
+    get:
+      operationId: orders_earnings_retrieve
       tags:
-      - menu
+      - orders
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          description: No response body
+  /api/orders/order/:
+    get:
+      operationId: orders_order_list
+      parameters:
+      - in: query
+        name: status
+        schema:
+          type: string
+      tags:
+      - orders
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Order'
+          description: ''
+    post:
+      operationId: orders_order_create
+      tags:
+      - orders
       requestBody:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Pizza'
+              $ref: '#/components/schemas/Order'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/Pizza'
+              $ref: '#/components/schemas/Order'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/Pizza'
+              $ref: '#/components/schemas/Order'
+        required: true
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Order'
+          description: ''
+  /api/orders/order/{id}/:
+    get:
+      operationId: orders_order_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this order.
+        required: true
+      tags:
+      - orders
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Order'
+          description: ''
+    put:
+      operationId: orders_order_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this order.
+        required: true
+      tags:
+      - orders
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Order'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Order'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Order'
         required: true
       security:
       - cookieAuth: []
@@ -257,30 +249,30 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Pizza'
+                $ref: '#/components/schemas/Order'
           description: ''
     patch:
-      operationId: menu_pizza_partial_update
+      operationId: orders_order_partial_update
       parameters:
       - in: path
-        name: pizza_id
+        name: id
         schema:
           type: integer
-        description: A unique integer value identifying this pizza.
+        description: A unique integer value identifying this order.
         required: true
       tags:
-      - menu
+      - orders
       requestBody:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/PatchedPizza'
+              $ref: '#/components/schemas/PatchedOrder'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/PatchedPizza'
+              $ref: '#/components/schemas/PatchedOrder'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/PatchedPizza'
+              $ref: '#/components/schemas/PatchedOrder'
       security:
       - cookieAuth: []
       - basicAuth: []
@@ -290,19 +282,19 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Pizza'
+                $ref: '#/components/schemas/Order'
           description: ''
     delete:
-      operationId: menu_pizza_destroy
+      operationId: orders_order_destroy
       parameters:
       - in: path
-        name: pizza_id
+        name: id
         schema:
           type: integer
-        description: A unique integer value identifying this pizza.
+        description: A unique integer value identifying this order.
         required: true
       tags:
-      - menu
+      - orders
       security:
       - cookieAuth: []
       - basicAuth: []
@@ -312,6 +304,46 @@ paths:
           description: No response body
 components:
   schemas:
+    Dessert:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          maxLength: 30
+        price:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,5}(?:\.\d{0,3})?$
+        menu_item:
+          type: integer
+      required:
+      - id
+      - menu_item
+      - name
+      - price
+    Drink:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          maxLength: 30
+        price:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,5}(?:\.\d{0,3})?$
+        menu_item:
+          type: integer
+      required:
+      - id
+      - menu_item
+      - name
+      - price
     Ingredient:
       type: object
       properties:
@@ -331,7 +363,184 @@ components:
       - cost
       - id
       - name
-    PatchedIngredient:
+    MenuItem:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        desserts:
+          type: array
+          items:
+            $ref: '#/components/schemas/Dessert'
+        drinks:
+          type: array
+          items:
+            $ref: '#/components/schemas/Drink'
+        pizzas:
+          type: array
+          items:
+            $ref: '#/components/schemas/Pizza'
+        name:
+          type: string
+          maxLength: 30
+        type:
+          type: string
+          maxLength: 20
+      required:
+      - desserts
+      - drinks
+      - id
+      - name
+      - pizzas
+      - type
+    Order:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        order_menu_items:
+          type: array
+          items:
+            $ref: '#/components/schemas/OrderMenuItem'
+        order_date:
+          type: string
+          format: date
+        status:
+          type: string
+          maxLength: 50
+        total_price:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,5}(?:\.\d{0,3})?$
+        discount_applied:
+          type: boolean
+        delivery_address:
+          type: string
+          maxLength: 30
+        customer:
+          type: integer
+      required:
+      - customer
+      - delivery_address
+      - id
+      - order_date
+      - order_menu_items
+      - status
+      - total_price
+    OrderMenuItem:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        menu_item:
+          $ref: '#/components/schemas/MenuItem'
+        extra_ingredients:
+          type: array
+          items:
+            $ref: '#/components/schemas/OrderMenuItemExtraIngredient'
+        quantity:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: -9223372036854775808
+          format: int64
+        order:
+          type: integer
+      required:
+      - extra_ingredients
+      - id
+      - menu_item
+      - order
+      - quantity
+    OrderMenuItemExtraIngredient:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        ingredient:
+          $ref: '#/components/schemas/Ingredient'
+        quantity:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: -9223372036854775808
+          format: int64
+        order_menu_item:
+          type: integer
+      required:
+      - id
+      - ingredient
+      - order_menu_item
+      - quantity
+    PatchedOrder:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        order_menu_items:
+          type: array
+          items:
+            $ref: '#/components/schemas/OrderMenuItem'
+        order_date:
+          type: string
+          format: date
+        status:
+          type: string
+          maxLength: 50
+        total_price:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,5}(?:\.\d{0,3})?$
+        discount_applied:
+          type: boolean
+        delivery_address:
+          type: string
+          maxLength: 30
+        customer:
+          type: integer
+    Pizza:
+      type: object
+      properties:
+        pizza_id:
+          type: integer
+          readOnly: true
+        ingredients:
+          type: string
+          readOnly: true
+        base_id:
+          $ref: '#/components/schemas/PizzaBase'
+        price:
+          type: string
+          readOnly: true
+        vegan:
+          type: string
+          readOnly: true
+        name:
+          type: string
+          maxLength: 30
+        time_to_cook:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: -9223372036854775808
+          format: int64
+        user_id:
+          type: integer
+          nullable: true
+        menu_item_id:
+          type: integer
+      required:
+      - base_id
+      - ingredients
+      - menu_item_id
+      - name
+      - pizza_id
+      - price
+      - time_to_cook
+      - vegan
+    PizzaBase:
       type: object
       properties:
         id:
@@ -343,55 +552,13 @@ components:
         cost:
           type: string
           format: decimal
-          pattern: ^-?\d{0,5}(?:\.\d{0,3})?$
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
         is_vegetarian:
           type: boolean
-    PatchedPizza:
-      type: object
-      properties:
-        pizza_id:
-          type: integer
-          readOnly: true
-        name:
-          type: string
-          maxLength: 30
-        price:
-          type: string
-          format: decimal
-          pattern: ^-?\d{0,5}(?:\.\d{0,3})?$
-        base_id:
-          type: integer
-        user_id:
-          type: integer
-          nullable: true
-        menu_item_id:
-          type: integer
-    Pizza:
-      type: object
-      properties:
-        pizza_id:
-          type: integer
-          readOnly: true
-        name:
-          type: string
-          maxLength: 30
-        price:
-          type: string
-          format: decimal
-          pattern: ^-?\d{0,5}(?:\.\d{0,3})?$
-        base_id:
-          type: integer
-        user_id:
-          type: integer
-          nullable: true
-        menu_item_id:
-          type: integer
       required:
-      - base_id
-      - menu_item_id
+      - cost
+      - id
       - name
-      - pizza_id
-      - price
   securitySchemes:
     basicAuth:
       type: http

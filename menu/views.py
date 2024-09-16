@@ -4,16 +4,16 @@ from .serializers import PizzaSerializer, IngredientSerializer, MenuItemSerializ
 from django_filters.rest_framework import DjangoFilterBackend
 
 
-class PizzaView(viewsets.ModelViewSet):
+class PizzaView(viewsets.ReadOnlyModelViewSet):
     queryset = Pizza.objects.select_related('')
     serializer_class = PizzaSerializer
 
 
-class IngredientView(viewsets.ModelViewSet):
+class IngredientView(viewsets.ReadOnlyModelViewSet):
     queryset = Ingredient.objects.all()
     serializer_class = IngredientSerializer
 
-class MenuItemView(viewsets.ModelViewSet):
+class MenuItemView(viewsets.ReadOnlyModelViewSet):
     queryset = MenuItem.objects.prefetch_related(
         'pizzas',
         'drinks',
@@ -22,5 +22,8 @@ class MenuItemView(viewsets.ModelViewSet):
     serializer_class = MenuItemSerializer
     filter_backends = [DjangoFilterBackend]
     filterset_fields = ['type']
+
+
+#Return custom menu items that are customers own i.e. not shared with other customers!
 
 

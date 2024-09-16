@@ -25,7 +25,7 @@ urlpatterns = [
     path('admin/', admin.site.urls),
 # Unlock URLS after adding urls to suburls!
    # path('api/customers/', include('customers.urls')),
-   # path('api/orders/', include('orders.urls')),
+   path('api/orders/', include('orders.urls')),
    path('api/menu/', include('menu.urls')),
    # path('api/delivery/', include('delivery.urls')),
 

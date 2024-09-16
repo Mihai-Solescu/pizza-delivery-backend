@@ -13,6 +13,7 @@ class Pizza(models.Model):
     name = models.CharField(max_length=30)
     base_id = models.ForeignKey('menu.PizzaBase', on_delete=models.CASCADE)
     price = models.DecimalField(decimal_places=3, max_digits=8) # Ingredient + labor cost + Profit margin
+    time_to_cook = models.IntegerField()
     user_id = models.ForeignKey('customers.Customer', on_delete=models.SET_NULL, null=True, blank=True)
     menu_item_id = models.ForeignKey('menu.MenuItem', on_delete=models.CASCADE, related_name='pizzas')
 

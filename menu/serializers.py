@@ -44,32 +44,20 @@ class PizzaSerializer(serializers.ModelSerializer):
     def get_price(self, obj):
         # 2h on this oneliner lmao, Decimals are a pain
         cost_base = PizzaBase.objects.get(pizza__menu_item_id=obj.menu_item_id).cost or Decimal('0')
+        cost_labor = Decimal('0.5')
         cost_ingredients = Ingredient.objects.filter(menuitemingredient__menu_item=obj.menu_item_id).aggregate(Sum('cost'))['cost__sum'] or Decimal('0')
-        return round(cost_base + cost_ingredients, 3)
+        return round(cost_base + cost_ingredients + cost_labor, 3)
 
 class DrinkSerializer(serializers.ModelSerializer):
-    ingredients = serializers.SerializerMethodField()
-
     class Meta:
         model = Drink
         fields = '__all__'
 
-    def get_ingredients(self, obj):
-        menu_item_id = obj.menu_item_id
-        ingredients = Ingredient.objects.filter(menuitemingredient__menu_item=menu_item_id)
-        return IngredientSerializer(ingredients, many=True).data
-
 class DessertSerializer(serializers.ModelSerializer):
-    ingredients = serializers.SerializerMethodField()
-
     class Meta:
         model = Dessert
         fields = '__all__'
 
-    def get_ingredients(self, obj):
-        menu_item_id = obj.menu_item_id
-        ingredients = Ingredient.objects.filter(menuitemingredient__menu_item=menu_item_id)
-        return IngredientSerializer(ingredients, many=True).data
 
 class MenuItemSerializer(serializers.ModelSerializer):
     desserts = DessertSerializer(many=True)
