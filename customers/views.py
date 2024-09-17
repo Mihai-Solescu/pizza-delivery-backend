@@ -23,4 +23,3 @@ class LoginView(APIView):
                 {'detail': 'Invalid email or password.'},
                 status=status.HTTP_401_UNAUTHORIZED
             )
-

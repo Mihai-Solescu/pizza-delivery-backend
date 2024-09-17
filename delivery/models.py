@@ -9,5 +9,5 @@ class Delivery(models.Model):
 class DeliveryPerson(models.Model):
     delivery_person_id = models.AutoField(primary_key=True)
     name = models.CharField(max_length=30)
-    is_available = models.BooleanField(default=True)  # Is this a good default?
-    delivery_address = models.CharField(max_length=30)
+    is_available = models.BooleanField(default=True)  # Is this a good default? Prbbly
+    postal_area = models.CharField(max_length=30)
