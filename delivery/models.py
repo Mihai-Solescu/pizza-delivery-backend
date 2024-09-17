@@ -5,7 +5,6 @@ class Delivery(models.Model):
     order_id = models.ForeignKey('orders.Order', on_delete=models.SET_NULL, null=True)
     delivery_person_id = models.ForeignKey('delivery.DeliveryPerson', on_delete=models.SET_NULL, related_name="deliveries", null=True) #We want to access this from the DeliveryPerson
     delivery_status = models.CharField(max_length=100)
-    estimated_delivery_time = models.TimeField()
 
 class DeliveryPerson(models.Model):
     delivery_person_id = models.AutoField(primary_key=True)

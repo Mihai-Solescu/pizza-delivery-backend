@@ -17,16 +17,18 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path, include
 from drf_spectacular.views import SpectacularAPIView, SpectacularRedocView, SpectacularSwaggerView
-
+from rest_framework_simplejwt.views import TokenRefreshView
 
 
 
 urlpatterns = [
+    #STAYING AUTHENTICATED!
+    path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+
     path('admin/', admin.site.urls),
-# Unlock URLS after adding urls to suburls!
-   # path('api/customers/', include('customers.urls')),
-   path('api/orders/', include('orders.urls')),
-   path('api/menu/', include('menu.urls')),
+    path('api/customers/', include('customers.urls')),
+    path('api/orders/', include('orders.urls')),
+    path('api/menu/', include('menu.urls')),
    # path('api/delivery/', include('delivery.urls')),
 
 # API visualisation!

@@ -1,3 +1,5 @@
+import datetime
+
 from django.db import models
 from customers.models import Customer
 from menu.models import MenuItem
@@ -11,6 +13,7 @@ class Order(models.Model):
     total_price = models.DecimalField(decimal_places=3, max_digits=8)
     discount_applied = models.BooleanField(default=False)
     delivery_address = models.CharField(max_length=30)
+    estimated_delivery_time = models.IntegerField(blank=True, null=True)
 
 
 class OrderMenuItem(models.Model):
