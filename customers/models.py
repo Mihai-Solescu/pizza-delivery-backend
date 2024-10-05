@@ -1,22 +1,19 @@
 from django.db import models
 from django.db import models
-from django.contrib.auth.models import AbstractBaseUser, BaseUserManager
+from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, User
+
 
 # Create your models here.
-class Customer(AbstractBaseUser):
-    customer_id = models.AutoField(primary_key=True)  #In Django we don't need to define primary key, but it makes clear
-    name = models.CharField(max_length=30, unique=True)
+class Customer(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='customer_profile')
+    customer_id = models.AutoField(primary_key=True)
+    name = models.CharField(max_length=30)
     gender = models.CharField(max_length=1, null=True, blank=True)
-    birthdate = models.DateField(null=True, blank=True)  # If it's children, then we must know whether they can use the service.
-    email = models.EmailField(unique=True)
+    birthdate = models.DateField(null=True, blank=True)
     phone_number = models.CharField(max_length=20, null=True, blank=True)
-    username = models.CharField(max_length=20, null=True, blank=True)
-    password = models.CharField(max_length=64)
     total_pizzas_ordered = models.IntegerField(default=0)
-    discount_code = models.ForeignKey('customers.DiscountCode', on_delete=models.SET_NULL, blank=True, null=True) #Ref, how to do this in django?
     is_birthday_freebie = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
-    USERNAME_FIELD = 'username'
 
 class CustomerAddress(models.Model):
     customer_address_id = models.AutoField(primary_key=True)
