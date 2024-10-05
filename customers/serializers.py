@@ -31,8 +31,8 @@ class LoginSerializer(serializers.Serializer):
 class CustomerRegisterSerializer(serializers.ModelSerializer):
 
     class Meta:
-        model = Customer
-        fields = ['email', 'password', 'first_name', 'last_name', 'phone_number', 'address', 'postal_code', 'city']
+        model = User
+        fields = ['email', 'password', 'first_name', 'last_name']
 
 # This should create User  + Customer account
     def create(self, data):
