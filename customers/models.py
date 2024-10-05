@@ -7,11 +7,11 @@ class Customer(AbstractBaseUser):
     customer_id = models.AutoField(primary_key=True)  #In Django we don't need to define primary key, but it makes clear
     name = models.CharField(max_length=30, unique=True)
     gender = models.CharField(max_length=1, null=True, blank=True)
-    birthdate = models.DateField()  # If it's children, then we must know whether they can use the service.
+    birthdate = models.DateField(null=True, blank=True)  # If it's children, then we must know whether they can use the service.
     email = models.EmailField(unique=True)
-    phone_number = models.CharField(max_length=20)
-    username = models.CharField(max_length=20)
-    password = models.CharField(max_length=64)
+    phone_number = models.CharField(max_length=20, null=True, blank=True)
+    username = models.CharField(max_length=20, null=True, blank=True)
+    password = models.CharField(max_length=64, null=True, blank=True)
     total_pizzas_ordered = models.IntegerField(default=0)
     discount_code = models.ForeignKey('customers.DiscountCode', on_delete=models.SET_NULL, blank=True, null=True) #Ref, how to do this in django?
     is_birthday_freebie = models.BooleanField(default=False)
