@@ -11,7 +11,7 @@ class Customer(AbstractBaseUser):
     email = models.EmailField(unique=True)
     phone_number = models.CharField(max_length=20, null=True, blank=True)
     username = models.CharField(max_length=20, null=True, blank=True)
-    password = models.CharField(max_length=64, null=True, blank=True)
+    password = models.CharField(max_length=64)
     total_pizzas_ordered = models.IntegerField(default=0)
     discount_code = models.ForeignKey('customers.DiscountCode', on_delete=models.SET_NULL, blank=True, null=True) #Ref, how to do this in django?
     is_birthday_freebie = models.BooleanField(default=False)
