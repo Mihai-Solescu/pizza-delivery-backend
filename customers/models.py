@@ -16,7 +16,7 @@ class Customer(AbstractBaseUser):
     discount_code = models.ForeignKey('customers.DiscountCode', on_delete=models.SET_NULL, blank=True, null=True) #Ref, how to do this in django?
     is_birthday_freebie = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
-    USERNAME_FIELD = 'email'
+    USERNAME_FIELD = 'username'
 
 class CustomerAddress(models.Model):
     customer_address_id = models.AutoField(primary_key=True)
