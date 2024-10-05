@@ -1,5 +1,6 @@
 from rest_framework import serializers
-from .models import Customer, DiscountCode
+from .models import Customer, DiscountCode, CustomerPreferences
+
 
 class DiscountCodeSerializer(serializers.ModelSerializer):
     class Meta:
@@ -26,12 +27,14 @@ class LoginSerializer(serializers.Serializer):
 
 
 class CustomerRegisterSerializer(serializers.ModelSerializer):
+
     class Meta:
         model = Customer
-        fields = ['email', 'password', 'first_name', 'last_name', 'phone_number', 'address', 'postal_code', 'city']
+        fields = ['email', 'customer_preferences', 'password', 'first_name', 'last_name', 'phone_number', 'address', 'postal_code', 'city']
 
     def create(self, validated_data):
         customer = Customer.objects.create_user(**validated_data)
+        CustomerPreferences.objects.create(customer=customer)
         return customer
 
 
