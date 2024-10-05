@@ -44,18 +44,24 @@ class LoginSerializer(serializers.Serializer):
 class CustomerRegisterSerializer(serializers.ModelSerializer):
 
     class Meta:
-        model = User
-        fields = ['email', 'password', 'first_name', 'last_name']
+        model = Customer
+        fields = ['email', 'username', 'password', 'first_name', 'last_name', 'address', 'postal_code', 'city']
 
     def create(self, validated_data):
-        user = (
-            User.objects.create_user(
+
+        user = User.objects.create_user(
             email=validated_data['email'],
             password=validated_data['password'],
             first_name=validated_data['first_name'],
-            last_name=validated_data['last_name']
-        ))
-        customer = Customer.objects.create(user=user)
+            last_name=validated_data['last_name'],
+            username=validated_data['username']
+        )
+        customer = Customer.objects.create(
+            user=user,
+            address_line=validated_data['address'],
+            postal_code=validated_data['postal_code'],
+            city=validated_data['city']
+        )
         return customer
 
 

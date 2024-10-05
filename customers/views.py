@@ -30,6 +30,7 @@ class LoginView(APIView):
 
 class CustomerRegisterView(APIView):
     def post(self, request):
+        print (request.data)
         serializer = CustomerRegisterSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()

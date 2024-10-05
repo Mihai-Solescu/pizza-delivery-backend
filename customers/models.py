@@ -7,20 +7,14 @@ from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, User
 class Customer(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='customer_profile')
     customer_id = models.AutoField(primary_key=True)
-    name = models.CharField(max_length=30)
     gender = models.CharField(max_length=1, null=True, blank=True)
     birthdate = models.DateField(null=True, blank=True)
-    phone_number = models.CharField(max_length=20, null=True, blank=True)
+    address_line = models.CharField(max_length=30, null=True, blank=True)
+    postal_code = models.CharField(max_length=20, default=0)
+    city = models.CharField(max_length=30, null=True, blank=True)
     total_pizzas_ordered = models.IntegerField(default=0)
     is_birthday_freebie = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
-
-class CustomerAddress(models.Model):
-    customer_address_id = models.AutoField(primary_key=True)
-    customer = models.ForeignKey('customers.Customer', related_name="address", on_delete=models.CASCADE) # This automatically references back to Customer tables primary key aka customer_id
-    address_line = models.CharField(max_length=30)
-    postal_code = models.CharField(max_length=20)
-    is_primary = models.BooleanField()
 
 class DiscountCode(models.Model):
     discount_code_id = models.AutoField(primary_key=True)
