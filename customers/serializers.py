@@ -30,7 +30,7 @@ class CustomerRegisterSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Customer
-        fields = ['email', 'customer_preferences', 'password', 'first_name', 'last_name', 'phone_number', 'address', 'postal_code', 'city']
+        fields = ['email', 'password', 'first_name', 'last_name', 'phone_number', 'address', 'postal_code', 'city']
 
     def create(self, validated_data):
         customer = Customer.objects.create_user(**validated_data)
