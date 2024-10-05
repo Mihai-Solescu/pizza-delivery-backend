@@ -44,7 +44,6 @@ class CustomerRegisterSerializer(serializers.ModelSerializer):
         )
         customer = Customer.objects.create(
             user=user,
-            phone_number=data['phone_number']
         )
         return customer
 
