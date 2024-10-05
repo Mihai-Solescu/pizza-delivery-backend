@@ -32,5 +32,9 @@ class DiscountCode(models.Model):
     is_redeemed = models.BooleanField(default=False)
     expiration_date = models.DateField()
 
-
-# Add discount_code model
+class CustomerPreferences(models.Model):
+    customer_preferences_id = models.AutoField(primary_key=True)
+    customer = models.ForeignKey('customers.Customer', related_name="preferences", on_delete=models.CASCADE)
+    is_vegetarian = models.BooleanField()
+    is_vegan = models.BooleanField()
+    is_spicy = models.BooleanField()
