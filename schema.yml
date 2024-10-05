@@ -4,14 +4,35 @@ info:
   version: 1.0.0
   description: We serve digitally delicious flamboyant treats!
 paths:
+  /api/customers/login/:
+    post:
+      operationId: customers_login_create
+      tags:
+      - customers
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          description: No response body
+  /api/customers/register/:
+    post:
+      operationId: customers_register_create
+      tags:
+      - customers
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          description: No response body
   /api/menu/ingredient/:
     get:
       operationId: menu_ingredient_list
       tags:
       - menu
       security:
-      - cookieAuth: []
-      - basicAuth: []
+      - jwtAuth: []
       - {}
       responses:
         '200':
@@ -35,8 +56,7 @@ paths:
       tags:
       - menu
       security:
-      - cookieAuth: []
-      - basicAuth: []
+      - jwtAuth: []
       - {}
       responses:
         '200':
@@ -56,8 +76,7 @@ paths:
       tags:
       - menu
       security:
-      - cookieAuth: []
-      - basicAuth: []
+      - jwtAuth: []
       - {}
       responses:
         '200':
@@ -81,8 +100,7 @@ paths:
       tags:
       - menu
       security:
-      - cookieAuth: []
-      - basicAuth: []
+      - jwtAuth: []
       - {}
       responses:
         '200':
@@ -97,8 +115,7 @@ paths:
       tags:
       - menu
       security:
-      - cookieAuth: []
-      - basicAuth: []
+      - jwtAuth: []
       - {}
       responses:
         '200':
@@ -122,8 +139,7 @@ paths:
       tags:
       - menu
       security:
-      - cookieAuth: []
-      - basicAuth: []
+      - jwtAuth: []
       - {}
       responses:
         '200':
@@ -138,8 +154,7 @@ paths:
       tags:
       - orders
       security:
-      - cookieAuth: []
-      - basicAuth: []
+      - jwtAuth: []
       - {}
       responses:
         '200':
@@ -155,8 +170,7 @@ paths:
       tags:
       - orders
       security:
-      - cookieAuth: []
-      - basicAuth: []
+      - jwtAuth: []
       - {}
       responses:
         '200':
@@ -184,8 +198,7 @@ paths:
               $ref: '#/components/schemas/Order'
         required: true
       security:
-      - cookieAuth: []
-      - basicAuth: []
+      - jwtAuth: []
       - {}
       responses:
         '201':
@@ -207,8 +220,7 @@ paths:
       tags:
       - orders
       security:
-      - cookieAuth: []
-      - basicAuth: []
+      - jwtAuth: []
       - {}
       responses:
         '200':
@@ -241,8 +253,7 @@ paths:
               $ref: '#/components/schemas/Order'
         required: true
       security:
-      - cookieAuth: []
-      - basicAuth: []
+      - jwtAuth: []
       - {}
       responses:
         '200':
@@ -274,8 +285,7 @@ paths:
             schema:
               $ref: '#/components/schemas/PatchedOrder'
       security:
-      - cookieAuth: []
-      - basicAuth: []
+      - jwtAuth: []
       - {}
       responses:
         '200':
@@ -296,12 +306,38 @@ paths:
       tags:
       - orders
       security:
-      - cookieAuth: []
-      - basicAuth: []
+      - jwtAuth: []
       - {}
       responses:
         '204':
           description: No response body
+  /api/token/refresh/:
+    post:
+      operationId: token_refresh_create
+      description: |-
+        Takes a refresh type JSON web token and returns an access type JSON web
+        token if the refresh token is valid.
+      tags:
+      - token
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TokenRefresh'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/TokenRefresh'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/TokenRefresh'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenRefresh'
+          description: ''
 components:
   schemas:
     Dessert:
@@ -397,13 +433,8 @@ components:
     Order:
       type: object
       properties:
-        id:
+        customer_id:
           type: integer
-          readOnly: true
-        order_menu_items:
-          type: array
-          items:
-            $ref: '#/components/schemas/OrderMenuItem'
         order_date:
           type: string
           format: date
@@ -419,12 +450,19 @@ components:
         delivery_address:
           type: string
           maxLength: 30
-        customer:
+        order_menu_items:
+          type: array
+          items:
+            $ref: '#/components/schemas/OrderMenuItem'
+        estimated_delivery_time:
           type: integer
+          maximum: 9223372036854775807
+          minimum: -9223372036854775808
+          format: int64
+          nullable: true
       required:
-      - customer
+      - customer_id
       - delivery_address
-      - id
       - order_date
       - order_menu_items
       - status
@@ -432,58 +470,38 @@ components:
     OrderMenuItem:
       type: object
       properties:
-        id:
+        menu_item_id:
           type: integer
-          readOnly: true
-        menu_item:
-          $ref: '#/components/schemas/MenuItem'
+        quantity:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: -9223372036854775808
+          format: int64
         extra_ingredients:
           type: array
           items:
             $ref: '#/components/schemas/OrderMenuItemExtraIngredient'
-        quantity:
-          type: integer
-          maximum: 9223372036854775807
-          minimum: -9223372036854775808
-          format: int64
-        order:
-          type: integer
       required:
-      - extra_ingredients
-      - id
-      - menu_item
-      - order
+      - menu_item_id
       - quantity
     OrderMenuItemExtraIngredient:
       type: object
       properties:
-        id:
+        ingredient_id:
           type: integer
-          readOnly: true
-        ingredient:
-          $ref: '#/components/schemas/Ingredient'
         quantity:
           type: integer
           maximum: 9223372036854775807
           minimum: -9223372036854775808
           format: int64
-        order_menu_item:
-          type: integer
       required:
-      - id
-      - ingredient
-      - order_menu_item
+      - ingredient_id
       - quantity
     PatchedOrder:
       type: object
       properties:
-        id:
+        customer_id:
           type: integer
-          readOnly: true
-        order_menu_items:
-          type: array
-          items:
-            $ref: '#/components/schemas/OrderMenuItem'
         order_date:
           type: string
           format: date
@@ -499,8 +517,16 @@ components:
         delivery_address:
           type: string
           maxLength: 30
-        customer:
+        order_menu_items:
+          type: array
+          items:
+            $ref: '#/components/schemas/OrderMenuItem'
+        estimated_delivery_time:
           type: integer
+          maximum: 9223372036854775807
+          minimum: -9223372036854775808
+          format: int64
+          nullable: true
     Pizza:
       type: object
       properties:
@@ -559,11 +585,20 @@ components:
       - cost
       - id
       - name
+    TokenRefresh:
+      type: object
+      properties:
+        access:
+          type: string
+          readOnly: true
+        refresh:
+          type: string
+          writeOnly: true
+      required:
+      - access
+      - refresh
   securitySchemes:
-    basicAuth:
+    jwtAuth:
       type: http
-      scheme: basic
-    cookieAuth:
-      type: apiKey
-      in: cookie
-      name: sessionid
+      scheme: bearer
+      bearerFormat: JWT
