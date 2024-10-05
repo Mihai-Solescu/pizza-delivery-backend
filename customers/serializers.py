@@ -1,7 +1,6 @@
 from django.contrib.auth.models import User
 from rest_framework import serializers
-
-from .models import Customer, DiscountCode, CustomerPreferences
+from .models import Customer, DiscountCode, CustomerPreferences, CustomerData
 
 
 class DiscountCodeSerializer(serializers.ModelSerializer):
@@ -23,6 +22,20 @@ class CustomerSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
+class CustomerPreferencesSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CustomerPreferences
+        fields = '__all__'
+        read_only_fields = ('customer',)
+
+
+class CustomerDataSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CustomerData
+        fields = '__all__'
+        read_only_fields = ('customer',)
+
+
 class LoginSerializer(serializers.Serializer):
     username = serializers.CharField(write_only=True, required=True)
     password = serializers.CharField(write_only=True, required=True)
@@ -34,17 +47,15 @@ class CustomerRegisterSerializer(serializers.ModelSerializer):
         model = User
         fields = ['email', 'password', 'first_name', 'last_name']
 
-# This should create User  + Customer account
-    def create(self, data):
-        user = User.objects.create_user(
-            email=data['email'],
-            password=data['password'],
-            first_name=data['first_name'],
-            last_name=data['last_name']
-        )
-        customer = Customer.objects.create(
-            user=user,
-        )
+    def create(self, validated_data):
+        user = (
+            User.objects.create_user(
+            email=validated_data['email'],
+            password=validated_data['password'],
+            first_name=validated_data['first_name'],
+            last_name=validated_data['last_name']
+        ))
+        customer = Customer.objects.create(user=user)
         return customer
 
 
