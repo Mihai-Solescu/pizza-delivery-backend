@@ -1,4 +1,6 @@
+from django.contrib.auth.models import User
 from rest_framework import serializers
+
 from .models import Customer, DiscountCode, CustomerPreferences
 
 
@@ -32,9 +34,18 @@ class CustomerRegisterSerializer(serializers.ModelSerializer):
         model = Customer
         fields = ['email', 'password', 'first_name', 'last_name', 'phone_number', 'address', 'postal_code', 'city']
 
+# This should create User  + Customer account
     def create(self, validated_data):
-        customer = Customer.objects.create_user(**validated_data)
-        CustomerPreferences.objects.create(customer=customer)
+        user = User.objects.create_user(
+            email=validated_data['email'],
+            password=validated_data['password'],
+            first_name=validated_data['first_name'],
+            last_name=validated_data['last_name']
+        )
+        customer = Customer.objects.create(
+            user=user,
+            phone_number=validated_data['phone_number']
+        )
         return customer
 
 
