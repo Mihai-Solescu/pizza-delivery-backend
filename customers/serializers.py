@@ -35,16 +35,16 @@ class CustomerRegisterSerializer(serializers.ModelSerializer):
         fields = ['email', 'password', 'first_name', 'last_name', 'phone_number', 'address', 'postal_code', 'city']
 
 # This should create User  + Customer account
-    def create(self, validated_data):
+    def create(self, data):
         user = User.objects.create_user(
-            email=validated_data['email'],
-            password=validated_data['password'],
-            first_name=validated_data['first_name'],
-            last_name=validated_data['last_name']
+            email=data['email'],
+            password=data['password'],
+            first_name=data['first_name'],
+            last_name=data['last_name']
         )
         customer = Customer.objects.create(
             user=user,
-            phone_number=validated_data['phone_number']
+            phone_number=data['phone_number']
         )
         return customer
 
