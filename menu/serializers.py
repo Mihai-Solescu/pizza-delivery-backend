@@ -1,28 +1,16 @@
 from decimal import Decimal
 
 from rest_framework import serializers
-from .models import Pizza, Ingredient, Dessert, Drink, MenuItem, PizzaBase
+from .models import Pizza, Ingredient, Dessert, Drink
 from django.db.models import Sum
-
 
 class IngredientSerializer(serializers.ModelSerializer):
     class Meta:
         model = Ingredient
         fields = '__all__'
 
-
-class PizzaBaseSerializer(serializers.ModelSerializer):
-
-    class Meta:
-        model = PizzaBase
-        fields = '__all__'
-
-
 class PizzaSerializer(serializers.ModelSerializer):
     ingredients = serializers.SerializerMethodField()
-    base_id = PizzaBaseSerializer(many=False)
-    price = serializers.SerializerMethodField()
-    vegan = serializers.SerializerMethodField()
 
     class Meta:
         model = Pizza
@@ -31,7 +19,6 @@ class PizzaSerializer(serializers.ModelSerializer):
     def get_ingredients(self, obj):
         menu_item_id = obj.menu_item_id
         ingredients = Ingredient.objects.filter(menuitemingredient__menu_item=menu_item_id)
-
         return IngredientSerializer(ingredients, many=True).data
 
     def get_vegan(self, obj):
@@ -56,14 +43,4 @@ class DrinkSerializer(serializers.ModelSerializer):
 class DessertSerializer(serializers.ModelSerializer):
     class Meta:
         model = Dessert
-        fields = '__all__'
-
-
-class MenuItemSerializer(serializers.ModelSerializer):
-    desserts = DessertSerializer(many=True)
-    drinks = DrinkSerializer(many=True)
-    pizzas = PizzaSerializer(many=True)
-
-    class Meta:
-        model = MenuItem
         fields = '__all__'
