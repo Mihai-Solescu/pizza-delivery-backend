@@ -18,8 +18,6 @@ class LoginView(APIView):
         password = request.data.get('password')
 
         print (request.data)
-        print (username)
-        print (password)
 
         user = authenticate(username=username, password=password)
 
