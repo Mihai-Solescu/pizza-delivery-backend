@@ -19,7 +19,7 @@ class Ingredient(models.Model):
     cost = models.DecimalField(decimal_places=3, max_digits=8)
     is_vegetarian = models.BooleanField(default=False)
 
-class PizzaIngredient(models.Model):
+class PizzaIngredientLink(models.Model):
     pizza = models.ForeignKey(Pizza, on_delete=models.CASCADE)
     is_vegan = models.BooleanField(default=False)
     is_vegetarian = models.BooleanField(default=False)

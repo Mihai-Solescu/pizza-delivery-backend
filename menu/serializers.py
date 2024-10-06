@@ -1,7 +1,7 @@
 from decimal import Decimal
 
 from rest_framework import serializers
-from .models import Pizza, Ingredient, Dessert, Drink
+from .models import Pizza, Ingredient, Dessert, Drink, PizzaIngredientLink
 from django.db.models import Sum
 
 class IngredientSerializer(serializers.ModelSerializer):
@@ -11,29 +11,33 @@ class IngredientSerializer(serializers.ModelSerializer):
 
 class PizzaSerializer(serializers.ModelSerializer):
     ingredients = serializers.SerializerMethodField()
+    price = serializers.SerializerMethodField()
+    is_vegan = serializers.SerializerMethodField()
+    is_vegetarian = serializers.SerializerMethodField()
 
     class Meta:
         model = Pizza
         fields = '__all__'
 
     def get_ingredients(self, obj):
-        menu_item_id = obj.menu_item_id
-        ingredients = Ingredient.objects.filter(menuitemingredient__menu_item=menu_item_id)
-        return IngredientSerializer(ingredients, many=True).data
+        ingredients = PizzaIngredientLink.objects.filter(pizza=obj)
+        return [{'name': i.ingredient.name, 'price': i.ingredient.cost, 'is_vegetarian': i.ingredient.is_vegetarian}
+                for i in ingredients]
 
-    def get_vegan(self, obj):
-        menu_item_id = obj.menu_item_id
-        is_base_veg = PizzaBase.objects.get(pizza__menu_item_id=menu_item_id).is_vegetarian
-        ingredients = Ingredient.objects.filter(menuitemingredient__menu_item=menu_item_id)
-        return all([ingredient.is_vegetarian for ingredient in ingredients] and is_base_veg)
-
-#Now that's an one liner!
     def get_price(self, obj):
-        # 2h on this oneliner lmao, Decimals are a pain
-        cost_base = PizzaBase.objects.get(pizza__menu_item_id=obj.menu_item_id).cost or Decimal('0')
-        cost_labor = Decimal('0.5')
-        cost_ingredients = Ingredient.objects.filter(menuitemingredient__menu_item=obj.menu_item_id).aggregate(Sum('cost'))['cost__sum'] or Decimal('0')
-        return round(cost_base + cost_ingredients + cost_labor, 3)
+        labor_price = 0.5
+        ingredients = PizzaIngredientLink.objects.filter(pizza=obj)
+        total_ingredient_cost = sum(ingredient.ingredient.cost for ingredient in ingredients)
+        total_price = total_ingredient_cost + labor_price
+        return round(total_price, 3)
+
+    def get_is_vegan(self, obj):
+        ingredients = PizzaIngredientLink.objects.filter(pizza=obj)
+        return all(ingredient.is_vegan for ingredient in ingredients)
+
+    def get_is_vegetarian(self, obj):
+        ingredients = PizzaIngredientLink.objects.filter(pizza=obj)
+        return all(ingredient.ingredient.is_vegetarian for ingredient in ingredients)
 
 class DrinkSerializer(serializers.ModelSerializer):
     class Meta:
