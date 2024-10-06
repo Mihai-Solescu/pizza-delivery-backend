@@ -12,11 +12,12 @@ from menu.models import Pizza, Drink, Dessert
 from .models import Order
 
 class AddItemToOrder(APIView):
+    permission_classes = [IsAuthenticated]
 
     def post(self, request):
         user = request.user
         order, created = Order.objects.get_or_create(
-            customer=user.customer,
+            customer=user.customer_profile,
             status='open',
             defaults={'order_date': date.today(), 'total_price': 0}
         )
@@ -26,11 +27,11 @@ class AddItemToOrder(APIView):
         quantity = int(request.data.get('quantity', 1))
 
         if item_type == 'pizza':
-            item = get_object_or_404(Pizza, id=item_id)
+            item = get_object_or_404(Pizza, pizza_id=item_id)
         elif item_type == 'drink':
-            item = get_object_or_404(Drink, id=item_id)
+            item = get_object_or_404(Drink, drink_id=item_id)
         elif item_type == 'dessert':
-            item = get_object_or_404(Dessert, id=item_id)
+            item = get_object_or_404(Dessert, dessert_id=item_id)
         else:
             return Response({'error': 'Invalid item type.'}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -39,6 +40,7 @@ class AddItemToOrder(APIView):
 
 
 class FinalizeOrderView(APIView):
+    permission_classes = [IsAuthenticated]
 
     def post(self, request, pk):
         try:

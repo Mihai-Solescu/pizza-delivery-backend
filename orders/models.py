@@ -2,7 +2,7 @@ from django.db import models
 from decimal import Decimal
 from django.utils import timezone
 from customers.models import Customer
-from menu.models import Ingredient
+from menu.models import Ingredient, Dessert, Drink, Pizza
 
 
 class Order(models.Model):
@@ -51,6 +51,32 @@ class Order(models.Model):
         pizza_quantity = sum([item.quantity for item in pizza_items])
         self.estimated_delivery_time = pizza_quantity * 2 + 10
 
+
+    def add_menu_item(self, item, quantity):
+        # Determine item type and id
+        if isinstance(item, Pizza):
+            item_type = 'pizza'
+            object_id = item.pizza_id
+        elif isinstance(item, Drink):
+            item_type = 'drink'
+            object_id = item.drink_id
+        elif isinstance(item, Dessert):
+            item_type = 'dessert'
+            object_id = item.dessert_id
+        else:
+            raise ValueError('Invalid item type')
+
+        order_item, created = OrderItem.objects.get_or_create(
+            order=self,
+            content_type=item_type,
+            object_id=object_id,
+            defaults={'quantity': quantity}
+        )
+
+        if not created:
+            order_item.quantity += quantity
+            order_item.save()
+
     def update_customer_pizza_count(self):
         pizza_items = self.order_menu_items.filter(menu_item__type='pizza')
         pizza_quantity = sum([item.quantity for item in pizza_items])
@@ -65,3 +91,18 @@ class Order(models.Model):
         self.update_customer_pizza_count()
         self.status = 'confirmed'
         self.save()
+
+class OrderItem(models.Model):
+    ITEM_TYPES = [
+        ('pizza', 'Pizza'),
+        ('drink', 'Drink'),
+        ('dessert', 'Dessert'),
+    ]
+
+    order = models.ForeignKey('Order', on_delete=models.CASCADE, related_name='items')
+    content_type = models.CharField(max_length=50, choices=ITEM_TYPES)
+    object_id = models.PositiveIntegerField()
+    quantity = models.PositiveIntegerField(default=1)
+
+    def __str__(self):
+        return f"{self.quantity} x {self.content_type} (ID: {self.object_id})"

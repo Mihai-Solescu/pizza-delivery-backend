@@ -9,7 +9,7 @@ from .views import (
 
 urlpatterns = [
     path('orders/<int:pk>/finalize/', FinalizeOrderView.as_view()),
-    path('add-item-to-order/', AddItemToOrder.as_view()),
+    path('add-item/', AddItemToOrder.as_view()),
     path('earnings/', EarningAPIView.as_view()),
 ]
 
