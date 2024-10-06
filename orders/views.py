@@ -2,15 +2,73 @@
 
 from rest_framework import viewsets, permissions, status
 from rest_framework.decorators import action
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from django_filters.rest_framework import DjangoFilterBackend
 from django.db.models import Sum
 from datetime import date, timedelta
 import calendar
 
-from .models import Order, OrderMenuItem, OrderMenuItemExtraIngredient
+from rest_framework.views import APIView
+
+from .models import Order, OrderMenuItem, OrderMenuItemExtraIngredient, MenuItem
 from .serializers import OrderSerializer, OrderMenuItemSerializer, OrderMenuItemExtraIngredientSerializer
 from django.core.exceptions import PermissionDenied
+
+
+class AddItemToOrder(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        user = request.user
+        order = Order.objects.get(customer=user, status='open')  # Assuming 'open' orders are active orders
+        menu_item_id = request.data.get('menu_item_id')
+        quantity = request.data.get('quantity')
+
+        menu_item = MenuItem.objects.get(id=menu_item_id)
+        order.add_menu_item(menu_item, quantity)
+
+        return Response({'message': 'Item added to order'}, status=status.HTTP_200_OK)
+
+class ModifyOrderItem(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def put(self, request, item_id):
+        user = request.user
+        order = Order.objects.get(customer=user, status='open')  # Assuming 'open' orders are active orders
+        quantity = request.data.get('quantity')
+
+        order_item = order.items.get(id=item_id)
+        order_item.quantity = quantity
+        order_item.save()
+
+        return Response({'message': 'Order item updated'}, status=status.HTTP_200_OK)
+
+class ApplyDiscount(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        user = request.user
+        order = Order.objects.get(customer=user, status='open')
+        discount_code = request.data.get('discount_code')
+
+        success = order.apply_discount(discount_code)
+        if success:
+            return Response({'message': 'Discount applied'}, status=status.HTTP_200_OK)
+        else:
+            return Response({'message': 'Invalid discount code'}, status=status.HTTP_400_BAD_REQUEST)
+
+class RemoveOrderItem(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def delete(self, request, item_id):
+        user = request.user
+        order = Order.objects.get(customer=user, status='open')  # Assuming 'open' orders are active orders
+        order_item = order.items.get(id=item_id)
+        order_item.delete()
+
+        return Response({'message': 'Item removed from order'}, status=status.HTTP_200_OK)
+
 
 class OrderViewSet(viewsets.ModelViewSet):
     queryset = Order.objects.all()

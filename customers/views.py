@@ -32,6 +32,8 @@ class LoginView(APIView):
             )
 
 
+
+
 class CustomerRegisterView(APIView):
     def post(self, request):
         print (request.data)
