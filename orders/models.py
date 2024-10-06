@@ -2,7 +2,7 @@ from django.db import models
 from decimal import Decimal
 from django.utils import timezone
 from customers.models import Customer
-from menu.models import MenuItem, Ingredient
+from menu.models import Ingredient
 
 
 class Order(models.Model):
