@@ -20,24 +20,25 @@ class PizzaSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
     def get_ingredients(self, obj):
-        ingredients = PizzaIngredientLink.objects.filter(pizza=obj)
-        return [{'name': i.ingredient.name, 'price': i.ingredient.cost, 'is_vegetarian': i.ingredient.is_vegetarian}
+        ingredients = PizzaIngredientLink.objects.filter(pizza=obj).select_related('ingredient')
+        return [{'name': i.ingredient.name,
+                 'price': i.ingredient.cost} # don't need is_vegan or is_vegetarian here
                 for i in ingredients]
 
     def get_price(self, obj):
-        labor_price = 0.5
-        ingredients = PizzaIngredientLink.objects.filter(pizza=obj)
+        ingredients = PizzaIngredientLink.objects.filter(pizza=obj).select_related('ingredient')
+        labor_price = Decimal(0.5) # 2h wasted on this line
         total_ingredient_cost = sum(ingredient.ingredient.cost for ingredient in ingredients)
         total_price = total_ingredient_cost + labor_price
         return round(total_price, 3)
 
     def get_is_vegan(self, obj):
-        ingredients = PizzaIngredientLink.objects.filter(pizza=obj)
-        return all(ingredient.is_vegan for ingredient in ingredients)
+        ingredients = PizzaIngredientLink.objects.filter(pizza=obj).select_related('ingredient')
+        return all(i.ingredient.is_vegan for i in ingredients)
 
     def get_is_vegetarian(self, obj):
-        ingredients = PizzaIngredientLink.objects.filter(pizza=obj)
-        return all(ingredient.ingredient.is_vegetarian for ingredient in ingredients)
+        ingredients = PizzaIngredientLink.objects.filter(pizza=obj).select_related('ingredient')
+        return all(i.ingredient.is_vegetarian for i in ingredients)
 
 class DrinkSerializer(serializers.ModelSerializer):
     class Meta:
