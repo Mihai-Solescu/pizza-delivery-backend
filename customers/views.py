@@ -1,3 +1,4 @@
+from rest_framework import permissions
 from django.contrib.auth import authenticate
 from rest_framework import status
 from rest_framework.response import Response
@@ -9,7 +10,10 @@ from customers.models import CustomerPreferences, CustomerData
 
 
 class LoginView(APIView):
+    permission_classes = [permissions.AllowAny]
+
     def post(self, request):
+
         username = request.data.get('username')
         password = request.data.get('password')
 
@@ -30,9 +34,6 @@ class LoginView(APIView):
                 {'detail': 'Invalid email or password.'},
                 status=status.HTTP_401_UNAUTHORIZED
             )
-
-
-
 
 class CustomerRegisterView(APIView):
     def post(self, request):

@@ -22,9 +22,7 @@ class PizzaSerializer(serializers.ModelSerializer):
     def get_ingredients(self, obj):
         ingredients = PizzaIngredientLink.objects.filter(pizza=obj).select_related('ingredient')
         return [{'name': i.ingredient.name,
-                 'price': i.ingredient.cost,
-                 'is_vegetarian': i.ingredient.is_vegetarian,
-                 'is_vegan': i.ingredient.is_vegan}  # Include is_vegan
+                 'price': i.ingredient.cost} # don't need is_vegan or is_vegetarian here
                 for i in ingredients]
 
     def get_price(self, obj):
