@@ -16,7 +16,6 @@ from .models import (
     Order,
     OrderMenuItem,
     OrderMenuItemExtraIngredient,
-    MenuItem,
 )
 from .serializers import (
     OrderSerializer,
@@ -24,46 +23,6 @@ from .serializers import (
     OrderMenuItemExtraIngredientSerializer,
 )
 
-class AddItemToOrder(APIView):
-    permission_classes = [IsAuthenticated]
-
-    def post(self, request):
-        user = request.user
-        try:
-            order = Order.objects.get(customer=user.customer, status='open')
-        except Order.DoesNotExist:
-            return Response({'error': 'Active order not found.'}, status=status.HTTP_404_NOT_FOUND)
-
-        menu_item_id = request.data.get('menu_item_id')
-        quantity = request.data.get('quantity', 1)
-
-        try:
-            menu_item = MenuItem.objects.get(id=menu_item_id)
-        except MenuItem.DoesNotExist:
-            return Response({'error': 'Menu item not found.'}, status=status.HTTP_404_NOT_FOUND)
-
-        order.add_menu_item(menu_item, quantity)
-
-        return Response({'message': 'Item added to order'}, status=status.HTTP_200_OK)
-
-class ModifyOrderItem(APIView):
-    permission_classes = [IsAuthenticated]
-
-    def put(self, request, item_id):
-        user = request.user
-        try:
-            order = Order.objects.get(customer=user.customer, status='open')
-            order_item = order.items.get(id=item_id)
-        except (Order.DoesNotExist, OrderMenuItem.DoesNotExist):
-            return Response({'error': 'Order item not found.'}, status=status.HTTP_404_NOT_FOUND)
-
-        quantity = request.data.get('quantity')
-        if quantity is not None:
-            order_item.quantity = quantity
-            order_item.save()
-            return Response({'message': 'Order item updated'}, status=status.HTTP_200_OK)
-        else:
-            return Response({'error': 'Quantity not provided.'}, status=status.HTTP_400_BAD_REQUEST)
 
 class ApplyDiscount(APIView):
     permission_classes = [IsAuthenticated]

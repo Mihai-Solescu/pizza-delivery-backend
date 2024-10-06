@@ -1,8 +1,8 @@
 from decimal import Decimal
 
 import customers.models
-from menu.models import Pizza, PizzaBase, Ingredient, Drink
-from .models import Order, OrderMenuItem, OrderMenuItemExtraIngredient, MenuItem
+from menu.models import Pizza, Ingredient, Drink
+from .models import Order, OrderMenuItem, OrderMenuItemExtraIngredient
 from delivery.models import Delivery
 from rest_framework import serializers
 from customers.models import Customer

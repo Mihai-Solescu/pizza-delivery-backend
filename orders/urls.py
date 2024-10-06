@@ -2,8 +2,6 @@
 
 from django.urls import path
 from .views import (
-    AddItemToOrder,
-    ModifyOrderItem,
     ApplyDiscount,
     RemoveOrderItem,
     OrderListCreateView,
@@ -33,8 +31,6 @@ urlpatterns = [
     path('order-item-extras/<int:pk>/', OrderMenuItemExtraIngredientDetailView.as_view()),
 
     #  custom endpoints
-    path('add-item-to-order/', AddItemToOrder.as_view()),
-    path('modify-order-item/<int:item_id>/', ModifyOrderItem.as_view()),
     path('apply-discount/', ApplyDiscount.as_view()),
     path('remove-order-item/<int:item_id>/', RemoveOrderItem.as_view()),
     path('earnings/', EarningAPIView.as_view()),
