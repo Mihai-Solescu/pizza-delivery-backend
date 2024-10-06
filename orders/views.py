@@ -8,7 +8,7 @@ from django.db.models import Sum
 from datetime import date, timedelta
 import calendar
 
-from menu.models import MenuItem, Pizza, Drink, Dessert
+from menu.models import Pizza, Drink, Dessert
 from .models import Order
 
 class AddItemToOrder(APIView):
