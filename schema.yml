@@ -180,9 +180,55 @@ paths:
               schema:
                 $ref: '#/components/schemas/Pizza'
           description: ''
-  /orders/ordermenuitemextras/:
+  /orders/add-item-to-order/:
+    post:
+      operationId: orders_add_item_to_order_create
+      tags:
+      - orders
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /orders/apply-discount/:
+    post:
+      operationId: orders_apply_discount_create
+      tags:
+      - orders
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /orders/earnings/:
     get:
-      operationId: orders_ordermenuitemextras_list
+      operationId: orders_earnings_retrieve
+      tags:
+      - orders
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /orders/modify-order-item/{item_id}/:
+    put:
+      operationId: orders_modify_order_item_update
+      parameters:
+      - in: path
+        name: item_id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - orders
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /orders/order-item-extras/:
+    get:
+      operationId: orders_order_item_extras_list
       tags:
       - orders
       security:
@@ -197,7 +243,7 @@ paths:
                   $ref: '#/components/schemas/OrderMenuItemExtraIngredient'
           description: ''
     post:
-      operationId: orders_ordermenuitemextras_create
+      operationId: orders_order_item_extras_create
       tags:
       - orders
       requestBody:
@@ -221,16 +267,14 @@ paths:
               schema:
                 $ref: '#/components/schemas/OrderMenuItemExtraIngredient'
           description: ''
-  /orders/ordermenuitemextras/{id}/:
+  /orders/order-item-extras/{id}/:
     get:
-      operationId: orders_ordermenuitemextras_retrieve
+      operationId: orders_order_item_extras_retrieve
       parameters:
       - in: path
         name: id
         schema:
           type: integer
-        description: A unique integer value identifying this order menu item extra
-          ingredient.
         required: true
       tags:
       - orders
@@ -244,14 +288,12 @@ paths:
                 $ref: '#/components/schemas/OrderMenuItemExtraIngredient'
           description: ''
     put:
-      operationId: orders_ordermenuitemextras_update
+      operationId: orders_order_item_extras_update
       parameters:
       - in: path
         name: id
         schema:
           type: integer
-        description: A unique integer value identifying this order menu item extra
-          ingredient.
         required: true
       tags:
       - orders
@@ -277,14 +319,12 @@ paths:
                 $ref: '#/components/schemas/OrderMenuItemExtraIngredient'
           description: ''
     patch:
-      operationId: orders_ordermenuitemextras_partial_update
+      operationId: orders_order_item_extras_partial_update
       parameters:
       - in: path
         name: id
         schema:
           type: integer
-        description: A unique integer value identifying this order menu item extra
-          ingredient.
         required: true
       tags:
       - orders
@@ -309,14 +349,12 @@ paths:
                 $ref: '#/components/schemas/OrderMenuItemExtraIngredient'
           description: ''
     delete:
-      operationId: orders_ordermenuitemextras_destroy
+      operationId: orders_order_item_extras_destroy
       parameters:
       - in: path
         name: id
         schema:
           type: integer
-        description: A unique integer value identifying this order menu item extra
-          ingredient.
         required: true
       tags:
       - orders
@@ -325,9 +363,9 @@ paths:
       responses:
         '204':
           description: No response body
-  /orders/ordermenuitems/:
+  /orders/order-items/:
     get:
-      operationId: orders_ordermenuitems_list
+      operationId: orders_order_items_list
       tags:
       - orders
       security:
@@ -342,7 +380,7 @@ paths:
                   $ref: '#/components/schemas/OrderMenuItem'
           description: ''
     post:
-      operationId: orders_ordermenuitems_create
+      operationId: orders_order_items_create
       tags:
       - orders
       requestBody:
@@ -366,15 +404,14 @@ paths:
               schema:
                 $ref: '#/components/schemas/OrderMenuItem'
           description: ''
-  /orders/ordermenuitems/{id}/:
+  /orders/order-items/{id}/:
     get:
-      operationId: orders_ordermenuitems_retrieve
+      operationId: orders_order_items_retrieve
       parameters:
       - in: path
         name: id
         schema:
           type: integer
-        description: A unique integer value identifying this order menu item.
         required: true
       tags:
       - orders
@@ -388,13 +425,12 @@ paths:
                 $ref: '#/components/schemas/OrderMenuItem'
           description: ''
     put:
-      operationId: orders_ordermenuitems_update
+      operationId: orders_order_items_update
       parameters:
       - in: path
         name: id
         schema:
           type: integer
-        description: A unique integer value identifying this order menu item.
         required: true
       tags:
       - orders
@@ -420,13 +456,12 @@ paths:
                 $ref: '#/components/schemas/OrderMenuItem'
           description: ''
     patch:
-      operationId: orders_ordermenuitems_partial_update
+      operationId: orders_order_items_partial_update
       parameters:
       - in: path
         name: id
         schema:
           type: integer
-        description: A unique integer value identifying this order menu item.
         required: true
       tags:
       - orders
@@ -451,13 +486,12 @@ paths:
                 $ref: '#/components/schemas/OrderMenuItem'
           description: ''
     delete:
-      operationId: orders_ordermenuitems_destroy
+      operationId: orders_order_items_destroy
       parameters:
       - in: path
         name: id
         schema:
           type: integer
-        description: A unique integer value identifying this order menu item.
         required: true
       tags:
       - orders
@@ -469,11 +503,6 @@ paths:
   /orders/orders/:
     get:
       operationId: orders_orders_list
-      parameters:
-      - in: query
-        name: status
-        schema:
-          type: string
       tags:
       - orders
       security:
@@ -520,7 +549,6 @@ paths:
         name: id
         schema:
           type: integer
-        description: A unique integer value identifying this order.
         required: true
       tags:
       - orders
@@ -540,7 +568,6 @@ paths:
         name: id
         schema:
           type: integer
-        description: A unique integer value identifying this order.
         required: true
       tags:
       - orders
@@ -572,7 +599,6 @@ paths:
         name: id
         schema:
           type: integer
-        description: A unique integer value identifying this order.
         required: true
       tags:
       - orders
@@ -603,7 +629,6 @@ paths:
         name: id
         schema:
           type: integer
-        description: A unique integer value identifying this order.
         required: true
       tags:
       - orders
@@ -612,39 +637,22 @@ paths:
       responses:
         '204':
           description: No response body
-  /orders/orders/{id}/apply_discounts/:
+  /orders/orders/{id}/apply_discount/:
     post:
-      operationId: orders_orders_apply_discounts_create
+      operationId: orders_orders_apply_discount_create
       parameters:
       - in: path
         name: id
         schema:
           type: integer
-        description: A unique integer value identifying this order.
         required: true
       tags:
       - orders
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/Order'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/Order'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/Order'
-        required: true
       security:
       - jwtAuth: []
       responses:
         '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Order'
-          description: ''
+          description: No response body
   /orders/orders/{id}/finalize/:
     post:
       operationId: orders_orders_finalize_create
@@ -653,31 +661,30 @@ paths:
         name: id
         schema:
           type: integer
-        description: A unique integer value identifying this order.
         required: true
       tags:
       - orders
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/Order'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/Order'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/Order'
-        required: true
       security:
       - jwtAuth: []
       responses:
         '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Order'
-          description: ''
+          description: No response body
+  /orders/remove-order-item/{item_id}/:
+    delete:
+      operationId: orders_remove_order_item_destroy
+      parameters:
+      - in: path
+        name: item_id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - orders
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
   /token/refresh/:
     post:
       operationId: token_refresh_create

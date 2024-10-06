@@ -13,6 +13,9 @@ class IngredientView(viewsets.ReadOnlyModelViewSet):
     queryset = Ingredient.objects.all()
     serializer_class = IngredientSerializer
 
+
+# For pizzas
+# For drinks & for deserts one call each per type
 class MenuItemView(viewsets.ReadOnlyModelViewSet):
     queryset = MenuItem.objects.prefetch_related(
         'pizzas',

@@ -1,31 +1,47 @@
 # views.py
 
-from rest_framework import viewsets, permissions, status
-from rest_framework.decorators import action
-from rest_framework.permissions import IsAuthenticated
+from rest_framework import generics, permissions, status
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from rest_framework.response import Response
 from django_filters.rest_framework import DjangoFilterBackend
+from django.core.exceptions import PermissionDenied
 from django.db.models import Sum
 from datetime import date, timedelta
 import calendar
 
 from rest_framework.views import APIView
 
-from .models import Order, OrderMenuItem, OrderMenuItemExtraIngredient, MenuItem
-from .serializers import OrderSerializer, OrderMenuItemSerializer, OrderMenuItemExtraIngredientSerializer
-from django.core.exceptions import PermissionDenied
-
+from .models import (
+    Order,
+    OrderMenuItem,
+    OrderMenuItemExtraIngredient,
+    MenuItem,
+)
+from .serializers import (
+    OrderSerializer,
+    OrderMenuItemSerializer,
+    OrderMenuItemExtraIngredientSerializer,
+)
 
 class AddItemToOrder(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
         user = request.user
-        order = Order.objects.get(customer=user, status='open')  # Assuming 'open' orders are active orders
-        menu_item_id = request.data.get('menu_item_id')
-        quantity = request.data.get('quantity')
+        try:
+            order = Order.objects.get(customer=user.customer, status='open')
+        except Order.DoesNotExist:
+            return Response({'error': 'Active order not found.'}, status=status.HTTP_404_NOT_FOUND)
 
-        menu_item = MenuItem.objects.get(id=menu_item_id)
+        menu_item_id = request.data.get('menu_item_id')
+        quantity = request.data.get('quantity', 1)
+
+        try:
+            menu_item = MenuItem.objects.get(id=menu_item_id)
+        except MenuItem.DoesNotExist:
+            return Response({'error': 'Menu item not found.'}, status=status.HTTP_404_NOT_FOUND)
+
         order.add_menu_item(menu_item, quantity)
 
         return Response({'message': 'Item added to order'}, status=status.HTTP_200_OK)
@@ -35,24 +51,33 @@ class ModifyOrderItem(APIView):
 
     def put(self, request, item_id):
         user = request.user
-        order = Order.objects.get(customer=user, status='open')  # Assuming 'open' orders are active orders
+        try:
+            order = Order.objects.get(customer=user.customer, status='open')
+            order_item = order.items.get(id=item_id)
+        except (Order.DoesNotExist, OrderMenuItem.DoesNotExist):
+            return Response({'error': 'Order item not found.'}, status=status.HTTP_404_NOT_FOUND)
+
         quantity = request.data.get('quantity')
-
-        order_item = order.items.get(id=item_id)
-        order_item.quantity = quantity
-        order_item.save()
-
-        return Response({'message': 'Order item updated'}, status=status.HTTP_200_OK)
+        if quantity is not None:
+            order_item.quantity = quantity
+            order_item.save()
+            return Response({'message': 'Order item updated'}, status=status.HTTP_200_OK)
+        else:
+            return Response({'error': 'Quantity not provided.'}, status=status.HTTP_400_BAD_REQUEST)
 
 class ApplyDiscount(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
         user = request.user
-        order = Order.objects.get(customer=user, status='open')
-        discount_code = request.data.get('discount_code')
+        try:
+            order = Order.objects.get(customer=user.customer, status='open')
+        except Order.DoesNotExist:
+            return Response({'error': 'Active order not found.'}, status=status.HTTP_404_NOT_FOUND)
 
+        discount_code = request.data.get('discount_code')
         success = order.apply_discount(discount_code)
+
         if success:
             return Response({'message': 'Discount applied'}, status=status.HTTP_200_OK)
         else:
@@ -63,52 +88,78 @@ class RemoveOrderItem(APIView):
 
     def delete(self, request, item_id):
         user = request.user
-        order = Order.objects.get(customer=user, status='open')  # Assuming 'open' orders are active orders
-        order_item = order.items.get(id=item_id)
-        order_item.delete()
+        try:
+            order = Order.objects.get(customer=user.customer, status='open')
+            order_item = order.items.get(id=item_id)
+            order_item.delete()
+            return Response({'message': 'Item removed from order'}, status=status.HTTP_200_OK)
+        except (Order.DoesNotExist, OrderMenuItem.DoesNotExist):
+            return Response({'error': 'Order item not found.'}, status=status.HTTP_404_NOT_FOUND)
 
-        return Response({'message': 'Item removed from order'}, status=status.HTTP_200_OK)
-
-
-class OrderViewSet(viewsets.ModelViewSet):
-    queryset = Order.objects.all()
+class OrderListCreateView(generics.ListCreateAPIView):
     serializer_class = OrderSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [IsAuthenticated]
     filter_backends = [DjangoFilterBackend]
     filterset_fields = ['status']
 
     def get_queryset(self):
-        if self.request.user.is_staff:
+        user = self.request.user
+        if user.is_staff:
             return Order.objects.all()
-        return Order.objects.filter(customer=self.request.user.customer)
+        return Order.objects.filter(customer=user.customer)
 
     def perform_create(self, serializer):
         serializer.save(customer=self.request.user.customer)
 
-    @action(detail=True, methods=['post'])
-    def apply_discounts(self, request, pk=None):
-        try:
-            order = self.get_object()
-            if order.customer != request.user.customer:
-                raise PermissionDenied("Perm denied.")
-        except Order.DoesNotExist:
-            return Response({'error': 'No order.'}, status=status.HTTP_404_NOT_FOUND)
-        discount_code = request.data.get('discount_code')
-        if discount_code:
-            pass;
-        order.apply_loyalty_discount()
-        order.apply_discount_code()
-        order.save()
-        return Response({'message': 'Discounts applied.', 'total_price': str(order.total_price)}, status=status.HTTP_200_OK)
+class OrderDetailView(generics.RetrieveUpdateDestroyAPIView):
+    serializer_class = OrderSerializer
+    permission_classes = [IsAuthenticated]
 
-    @action(detail=True, methods=['post'])
-    def finalize(self, request, pk=None):
+    def get_queryset(self):
+        user = self.request.user
+        if user.is_staff:
+            return Order.objects.all()
+        return Order.objects.filter(customer=user.customer)
+
+    def perform_update(self, serializer):
+        order = self.get_object()
+        if order.customer != self.request.user.customer:
+            raise PermissionDenied("You do not have permission to modify this order.")
+        serializer.save()
+
+class ApplyDiscountToOrderView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, pk):
         try:
-            order = self.get_object()
+            order = Order.objects.get(pk=pk)
             if order.customer != request.user.customer:
-                raise PermissionDenied("No perm.")
+                raise PermissionDenied("Permission denied.")
         except Order.DoesNotExist:
             return Response({'error': 'Order not found.'}, status=status.HTTP_404_NOT_FOUND)
+
+        discount_code = request.data.get('discount_code')
+        if discount_code:
+            success = order.apply_discount(discount_code)
+            if success:
+                order.save()
+                return Response({'message': 'Discount applied.', 'total_price': str(order.total_price)}, status=status.HTTP_200_OK)
+            else:
+                return Response({'message': 'Invalid discount code.'}, status=status.HTTP_400_BAD_REQUEST)
+        else:
+            return Response({'error': 'Discount code not provided.'}, status=status.HTTP_400_BAD_REQUEST)
+
+class FinalizeOrderView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, pk):
+        try:
+            order = Order.objects.get(pk=pk)
+            if order.customer != request.user.customer:
+                raise PermissionDenied("Permission denied.")
+        except Order.DoesNotExist:
+            return Response({'error': 'Order not found.'}, status=status.HTTP_404_NOT_FOUND)
+
         if not order.order_items.filter(menu_item__type='pizza').exists():
             return Response({'error': 'You must order at least one pizza.'}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -122,24 +173,26 @@ class OrderViewSet(viewsets.ModelViewSet):
             'total_price': str(order.total_price)
         }, status=status.HTTP_200_OK)
 
-class EarningView(viewsets.ViewSet):
-    permission_classes = [permissions.IsAdminUser]
+class EarningAPIView(APIView):
+    permission_classes = [IsAdminUser]
     filter_backends = [DjangoFilterBackend]
     filterset_fields = ['age', 'gender', 'postal_code']
 
-    def list(self, request):
+    def get(self, request):
         today = date.today()
         first_day = today.replace(day=1)
         last_day = today.replace(day=calendar.monthrange(today.year, today.month)[1])
-        orders = Order.objects.filter(order_date__range = [first_day, last_day])
+        orders = Order.objects.filter(order_date__range=[first_day, last_day])
+
         age = request.query_params.get('age')
         gender = request.query_params.get('gender')
         postal_code = request.query_params.get('postal_code')
+
         if age:
             birthdate_threshold = date.today() - timedelta(days=int(age) * 365)
             orders = orders.filter(customer__birthdate__lte=birthdate_threshold)
         if gender:
-            orders = orders.filter(customer__gender = gender)
+            orders = orders.filter(customer__gender=gender)
         if postal_code:
             orders = orders.filter(customer__address__postal_code=postal_code)
 
@@ -152,18 +205,35 @@ class EarningView(viewsets.ViewSet):
                 'postal_code': postal_code
             }
         })
-class OrderMenuItemView(viewsets.ModelViewSet):
-    queryset = OrderMenuItem.objects.all()
+
+class OrderMenuItemListCreateView(generics.ListCreateAPIView):
     serializer_class = OrderMenuItemSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
         return OrderMenuItem.objects.filter(order__customer=self.request.user.customer)
 
-class OrderMenuItemExtraIngredientView(viewsets.ModelViewSet):
-    queryset = OrderMenuItemExtraIngredient.objects.all()
-    serializer_class = OrderMenuItemExtraIngredientSerializer
-    permission_classes = [permissions.IsAuthenticated]
+class OrderMenuItemDetailView(generics.RetrieveUpdateDestroyAPIView):
+    serializer_class = OrderMenuItemSerializer
+    permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        return OrderMenuItemExtraIngredient.objects.filter(order_menu_item__order__customer = self.request.user.customer)
+        return OrderMenuItem.objects.filter(order__customer=self.request.user.customer)
+
+class OrderMenuItemExtraIngredientListCreateView(generics.ListCreateAPIView):
+    serializer_class = OrderMenuItemExtraIngredientSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        return OrderMenuItemExtraIngredient.objects.filter(
+            order_menu_item__order__customer=self.request.user.customer
+        )
+
+class OrderMenuItemExtraIngredientDetailView(generics.RetrieveUpdateDestroyAPIView):
+    serializer_class = OrderMenuItemExtraIngredientSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        return OrderMenuItemExtraIngredient.objects.filter(
+            order_menu_item__order__customer=self.request.user.customer
+        )

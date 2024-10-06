@@ -1,4 +1,5 @@
 import datetime
+from decimal import Decimal
 from time import timezone
 
 from django.db import models
