@@ -31,6 +31,7 @@ ALLOWED_HOSTS = []
 CORS_ALLOWED_ORIGINS = [
     "https://x.thunkable.com",
     "https://xthunkable.com",
+    "http://localhost:5173",
     # Add other Thunkable domains if necessary
 ]
 
