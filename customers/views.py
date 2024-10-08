@@ -105,7 +105,36 @@ class UserPreferencesView(APIView):
         try:
             preferences = UserPreferences.objects.get(user=request.user)
             serializer = UserPreferencesSerializer(preferences)
-            return Response(serializer.data, status=status.HTTP_200_OK)
+
+            # Prepare the response
+            response_data = {
+                'favourite_sauce': serializer.data['favourite_sauce'],
+                'cheese_preference': serializer.data['cheese_preference'],
+                'spiciness_level': serializer.data['spiciness_level'],
+                'is_vegetarian': serializer.data['is_vegetarian'],
+                'is_vegan': serializer.data['is_vegan'],
+                'pizza_size': serializer.data['pizza_size'],
+                'budget_range': serializer.data['budget_range'],  # Convert Decimal to string
+                'toppings': []  # Initialize toppings list
+            }
+
+            # Populate the toppings list with keys and values
+            toppings_keys = [
+                'pepperoni', 'mushrooms', 'onions', 'olives', 'sun_dried_tomatoes',
+                'bell_peppers', 'chicken', 'bacon', 'ham', 'sausage',
+                'ground_beef', 'anchovies', 'pineapple', 'basil',
+                'broccoli', 'zucchini', 'garlic', 'jalapenos',
+                'BBQ_sauce', 'red_peppers', 'spinach', 'feta_cheese'
+            ]
+
+            for topping in toppings_keys:
+                response_data['toppings'].append({
+                    'name': topping,
+                    'preference': serializer.data[topping]
+                })
+
+            return Response(response_data, status=status.HTTP_200_OK)
+
         except UserPreferences.DoesNotExist:
             return Response(
                 {"detail": "Preferences not found for this user."},

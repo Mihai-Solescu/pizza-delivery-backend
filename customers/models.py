@@ -86,7 +86,7 @@ class UserPreferences(models.Model):
     ])
 
     # Budget Range (Use numeric ranges or midpoints for similarity calculations)
-    budget_range = models.DecimalField(max_digits=5, decimal_places=2)
+    budget_range = models.IntegerField(default=7)
 
 
 class CustomerData(models.Model):
