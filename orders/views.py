@@ -11,6 +11,7 @@ import calendar
 from menu.models import Pizza, Drink, Dessert
 from menu.serializers import PizzaSerializer, DrinkSerializer, DessertSerializer
 from .models import Order
+from .serializers import OrderSerializer
 
 
 class GetOrderItemsView(APIView):
@@ -22,9 +23,9 @@ class GetOrderItemsView(APIView):
 
         try:
             # Fetch the open order for the customer
-            order = Order.objects.get(customer=user.customer_profile, status='open')
-        except Order.DoesNotExist:
-            return Response({'error': 'No open order found.'}, status=status.HTTP_404_NOT_FOUND)
+            order, created = Order.objects.get_or_create(customer=user.customer_profile, status='open')
+        except Order.MultipleObjectsReturned:
+            return Response({'error': 'Multiple open orders found.'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
         # Get all order items associated with the open order
         order_items = order.items.all()  # 'items' is the related name in OrderItem model
@@ -99,27 +100,44 @@ class AddItemToOrder(APIView):
         order.add_menu_item(item, quantity)
         return Response({'message': f'{item_type.capitalize()} added to order.'}, status=status.HTTP_200_OK)
 
+class RemoveItemFromOrder(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        user = request.user
+        order = Order.objects.filter(customer=user.customer_profile, status='open').first()
+
+        if not order:
+            return Response({'error': 'No open order found.'}, status=status.HTTP_404_NOT_FOUND)
+
+        item_type = request.data.get('item_type')
+        item_id = request.data.get('item_id')
+        quantity = int(request.data.get('quantity', 1))
+
+        if item_type == 'pizza':
+            item = get_object_or_404(Pizza, pizza_id=item_id)
+        elif item_type == 'drink':
+            item = get_object_or_404(Drink, drink_id=item_id)
+        elif item_type == 'dessert':
+            item = get_object_or_404(Dessert, dessert_id=item_id)
+        else:
+            return Response({'error': 'Invalid item type.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        order.remove_menu_item(item, quantity)
+        return Response({'message': f'{item_type.capitalize()} removed from order.'}, status=status.HTTP_200_OK)
 
 class FinalizeOrderView(APIView):
     permission_classes = [IsAuthenticated]
 
-    def post(self, request, pk):
-        try:
-            order = Order.objects.get(pk=pk, status='finalized')
-            if order.customer != request.user.customer:
-                raise PermissionDenied("No entry! ")
-        except Order.DoesNotExist:
-            return Response({'error': 'Order not found!'}, status=status.HTTP_404_NOT_FOUND)
+    def post(self, request):
+        user = request.user
+        order = Order.objects.filter(customer=user.customer_profile, status='open').first()
 
-        if not order.order_menu_items.filter(menu_item__type='pizza').exists():
-            return Response({'error': 'Need one pizza please.'}, status=status.HTTP_400_BAD_REQUEST)
+        if not order:
+            return Response({'error': 'No open order found.'}, status=status.HTTP_404_NOT_FOUND)
 
-        order.process_order()
-        return Response({
-            'message': 'Order accepted.',
-            'estimated_delivery_time': order.estimated_delivery_time,
-            'total_price': str(order.total_price)
-        }, status=status.HTTP_200_OK)
+        order.finalize_order()
+        return Response({'message': 'Order finalized.'}, status=status.HTTP_200_OK)
 
 class EarningAPIView(APIView):
     permission_classes = [IsAdminUser]
