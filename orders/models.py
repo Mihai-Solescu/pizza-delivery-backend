@@ -32,7 +32,7 @@ class Order(models.Model):
         if self.customer.discount_code and not self.customer.discount_code.is_redeemed:
             self.total_price *= Decimal('0.9')
             self.customer.discount_code.is_redeemed = True
-            self.customer.discount_code.save()
+            self.customer.discount_applied = True
             self.discount_applied = True
 
     def apply_birthday_freebies(self):

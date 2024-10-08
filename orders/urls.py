@@ -8,7 +8,7 @@ from .views import (
 )
 
 urlpatterns = [
-    path('items/', GetOrderItemsView.as_view(), name='get_order_items'),
+    path('items/', GetOrderItemsView.as_view()),
     path('finalize/', FinalizeOrderView.as_view()),
     path('add-item/', AddItemToOrder.as_view()),
     path('remove-item/', AddItemToOrder.as_view()),

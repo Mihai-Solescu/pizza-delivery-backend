@@ -14,15 +14,9 @@ class Customer(models.Model):
     city = models.CharField(max_length=30, null=True, blank=True)
     total_pizzas_ordered = models.IntegerField(default=0)
     is_birthday_freebie = models.BooleanField(default=False)
+    discount_code = models.CharField(max_length=32, unique=True)
+    discount_applied = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
-
-class DiscountCode(models.Model):
-    discount_code_id = models.AutoField(primary_key=True)
-    code = models.CharField(max_length=11)
-    amount = models.DecimalField(decimal_places=3, max_digits=8)
-    description = models.CharField(max_length=100)
-    is_redeemed = models.BooleanField(default=False)
-    expiration_date = models.DateField()
 
 class CustomerPreferences(models.Model):
     customer_preferences_id = models.AutoField(primary_key=True)
