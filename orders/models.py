@@ -1,17 +1,20 @@
+from datetime import datetime, timedelta
+
 from django.db import models
 from decimal import Decimal
 from django.utils import timezone
 from customers.models import Customer
+from delivery.models import Delivery
 from menu.models import Ingredient, Dessert, Drink, Pizza
 
 
 class Order(models.Model):
     customer = models.ForeignKey(Customer, on_delete=models.CASCADE)
     order_date = models.DateField()
+    delivery = models.ForeignKey('delivery.Delivery', blank=True, null=True, on_delete=models.CASCADE)
     status = models.CharField(max_length=50, default="pending")
     total_price = models.DecimalField(decimal_places=3, max_digits=8, default=Decimal('0.00'))
     discount_applied = models.BooleanField(default=False)
-    delivery_address = models.CharField(max_length=255)
     estimated_delivery_time = models.IntegerField(blank=True, null=True)
 
     def apply_loyalty_discount(self):
@@ -92,6 +95,46 @@ class Order(models.Model):
         self.status = 'confirmed'
         self.save()
 
+    def cancel_order_within_time(self):
+        if self.order_date < datetime.now() + timedelta(minutes=5):
+            self.status = "cancelled"
+            self.save()
+            return True
+        else:
+            return False
+
+    def check_order_combinations(self):
+        ordersOfPastThreeMinsWithSameAddress = self.delivery.objects.filter(order_id__order_date__gte=datetime.now() - timedelta(minutes=3),
+                                                                            order__customer__address_line=Delivery.delivery_address)
+        for order in ordersOfPastThreeMinsWithSameAddress:
+            if order.delivery == self.delivery:
+                return
+
+            pizzas = OrderItem.objects.filter(order_id=order.order_id, content_type='pizza')
+            for pizza in pizzas:
+                if pizza.quantity + self.delivery.pizza_quantity > 3:
+                    return False
+
+                self.delivery.pizza_quantity += pizza.quantity
+
+            self.delivery.save()
+
+        return True
+
+
+
+
+
+
+
+
+
+
+
+
+
+        return True
+
 class OrderItem(models.Model):
     ITEM_TYPES = [
         ('pizza', 'Pizza'),
@@ -104,5 +147,3 @@ class OrderItem(models.Model):
     object_id = models.PositiveIntegerField()
     quantity = models.PositiveIntegerField(default=1)
 
-    def __str__(self):
-        return f"{self.quantity} x {self.content_type} (ID: {self.object_id})"
