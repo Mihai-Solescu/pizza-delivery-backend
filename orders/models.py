@@ -8,7 +8,14 @@ from menu.models import Ingredient, Dessert, Drink, Pizza
 class Order(models.Model):
     customer = models.ForeignKey(Customer, on_delete=models.CASCADE)
     order_date = models.DateField()
-    status = models.CharField(max_length=50, default="pending")
+    STATUS_CHOICES = [
+        ('open', 'Open'),
+        ('confirmed', 'Confirmed'),
+        ('delivering', 'Delivering'),
+        ('delivered', 'Delivered'),
+        ('canceled', 'Canceled'),
+    ]
+    status = models.CharField(max_length=50, choices=STATUS_CHOICES, default="open")
     total_price = models.DecimalField(decimal_places=3, max_digits=8, default=Decimal('0.00'))
     discount_applied = models.BooleanField(default=False)
     delivery_address = models.CharField(max_length=255)
@@ -84,13 +91,16 @@ class Order(models.Model):
         self.customer.save()
 
     def process_order(self):
-        self.apply_loyalty_discount()
-        self.apply_discount_code()
-        self.apply_birthday_freebies()
-        self.calculate_estimated_delivery_time()
-        self.update_customer_pizza_count()
-        self.status = 'confirmed'
-        self.save()
+        if self.status == 'open':
+            self.apply_loyalty_discount()
+            self.apply_discount_code()
+            self.apply_birthday_freebies()
+            self.calculate_estimated_delivery_time()
+            self.update_customer_pizza_count()
+            self.status = 'confirmed'
+            self.save()
+        else:
+            raise ValueError('Order is not open')
 
 class OrderItem(models.Model):
     ITEM_TYPES = [
