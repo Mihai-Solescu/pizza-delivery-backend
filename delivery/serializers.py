@@ -1,5 +1,8 @@
+from datetime import timezone
 from rest_framework import serializers
+from orders.models import Order
 from .models import Delivery, DeliveryPerson
+
 
 class DeliverySerializer(serializers.ModelSerializer):
 
@@ -8,7 +11,13 @@ class DeliverySerializer(serializers.ModelSerializer):
         fields = ('delivery_id', 'order_id', 'delivery_person_id', 'delivery_status')
 
     def create(self, validated_data):
-        return Delivery.objects.create(**validated_data)
+        delivery_person = validated_data.get('delivery_person')
+        order_id = validated_data.get('order_id')
+        delivery_person.last_dispatched = timezone.now()
+        delivery_person.save()
+        delivery = Delivery.objects.create(**validated_data)
+        Order.objects.filter(order_id=order_id).update(delivery=delivery.delivery_id)
+        return delivery
 
     def update(self, instance, validated_data):
         instance.order_id = validated_data.get('order_id', instance.order_id)

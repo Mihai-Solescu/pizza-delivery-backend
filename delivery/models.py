@@ -28,3 +28,4 @@ class DeliveryPerson(models.Model):
             return True
         if self.last_dispatched:
             return self.last_dispatched < timezone.now() + timedelta(minutes=30)
+

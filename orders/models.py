@@ -133,7 +133,6 @@ class Order(models.Model):
         return True
 
 
-
 class OrderItem(models.Model):
     ITEM_TYPES = [
         ('pizza', 'Pizza'),

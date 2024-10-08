@@ -1,7 +1,12 @@
+from datetime import timezone
+
 from django.shortcuts import render
 from rest_framework import status
 from rest_framework.response import Response
+from rest_framework.views import APIView
+
 from .models import Delivery, DeliveryPerson
+from .serializers import DeliverySerializer
 
 
 #to be tested...
@@ -25,9 +30,4 @@ class DeliveryStatusView():
             return Response({'error': 'Invalid request'}, status=status.HTTP_400_BAD_REQUEST)
 
 
-class makeDeliveryView():
-    def post(self, request):
-
-        return Response({'delivery_id': delivery.delivery_id}, status=status.HTTP_201_CREATED)
-
-
+class DeliveryPersonView(APIView):

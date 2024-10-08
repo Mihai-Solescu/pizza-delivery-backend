@@ -22,7 +22,6 @@ paths:
       - customers
       security:
       - jwtAuth: []
-      - {}
       responses:
         '200':
           description: No response body
@@ -33,7 +32,6 @@ paths:
       - customers
       security:
       - jwtAuth: []
-      - {}
       responses:
         '200':
           description: No response body
@@ -43,7 +41,6 @@ paths:
       - customers
       security:
       - jwtAuth: []
-      - {}
       responses:
         '200':
           description: No response body
@@ -54,7 +51,27 @@ paths:
       - customers
       security:
       - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /menu/ingredientlist/:
+    get:
+      operationId: menu_ingredientlist_retrieve
+      tags:
+      - menu
+      security:
+      - jwtAuth: []
       - {}
+      responses:
+        '200':
+          description: No response body
+  /menu/pizzalist/:
+    get:
+      operationId: menu_pizzalist_retrieve
+      tags:
+      - menu
+      security:
+      - jwtAuth: []
       responses:
         '200':
           description: No response body
@@ -65,7 +82,6 @@ paths:
       - orders
       security:
       - jwtAuth: []
-      - {}
       responses:
         '200':
           description: No response body
@@ -79,20 +95,33 @@ paths:
       responses:
         '200':
           description: No response body
-  /orders/orders/{id}/finalize/:
+  /orders/finalize/:
     post:
-      operationId: orders_orders_finalize_create
-      parameters:
-      - in: path
-        name: id
-        schema:
-          type: integer
-        required: true
+      operationId: orders_finalize_create
       tags:
       - orders
       security:
       - jwtAuth: []
-      - {}
+      responses:
+        '200':
+          description: No response body
+  /orders/items/:
+    get:
+      operationId: orders_items_retrieve
+      tags:
+      - orders
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /orders/remove-item/:
+    post:
+      operationId: orders_remove_item_create
+      tags:
+      - orders
+      security:
+      - jwtAuth: []
       responses:
         '200':
           description: No response body
