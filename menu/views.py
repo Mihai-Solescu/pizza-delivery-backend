@@ -9,7 +9,7 @@ class PizzaListViewSet(APIView):
 
     def get(self, request):
 
-        print('Requesting pizza list: ' + request.user)
+        print(request.user)
 
         pizzas = Pizza.objects.all()
         serializer = PizzaSerializer(pizzas, many=True)

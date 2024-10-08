@@ -4,15 +4,18 @@ from customers.models import Customer
 
 class Pizza(models.Model):
     pizza_id = models.AutoField(primary_key=True)
+    description = models.CharField(max_length=255, default="")
     name = models.CharField(max_length=30)
 
 class Drink(models.Model):
     drink_id = models.AutoField(primary_key=True)
     name = models.CharField(max_length=30)
+    description = models.CharField(max_length=255, default="")
     price = models.DecimalField(decimal_places=3, max_digits=8)
 
 class Dessert(models.Model):
     dessert_id = models.AutoField(primary_key=True)
+    description = models.CharField(max_length=255, default="")
     name = models.CharField(max_length=30)
     price = models.DecimalField(decimal_places=3, max_digits=8)
 

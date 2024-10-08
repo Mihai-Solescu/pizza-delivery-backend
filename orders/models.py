@@ -11,6 +11,14 @@ from menu.models import Ingredient, Dessert, Drink, Pizza
 class Order(models.Model):
     customer = models.ForeignKey(Customer, on_delete=models.CASCADE)
     order_date = models.DateField()
+    STATUS_CHOICES = [
+        ('open', 'Open'),
+        ('confirmed', 'Confirmed'),
+        ('delivering', 'Delivering'),
+        ('delivered', 'Delivered'),
+        ('canceled', 'Canceled'),
+    ]
+    status = models.CharField(max_length=50, choices=STATUS_CHOICES, default="open")
     delivery = models.ForeignKey('delivery.Delivery', blank=True, null=True, on_delete=models.CASCADE)
     status = models.CharField(max_length=50, default="pending")
     total_price = models.DecimalField(decimal_places=3, max_digits=8, default=Decimal('0.00'))
@@ -87,13 +95,16 @@ class Order(models.Model):
         self.customer.save()
 
     def process_order(self):
-        self.apply_loyalty_discount()
-        self.apply_discount_code()
-        self.apply_birthday_freebies()
-        self.calculate_estimated_delivery_time()
-        self.update_customer_pizza_count()
-        self.status = 'confirmed'
-        self.save()
+        if self.status == 'open':
+            self.apply_loyalty_discount()
+            self.apply_discount_code()
+            self.apply_birthday_freebies()
+            self.calculate_estimated_delivery_time()
+            self.update_customer_pizza_count()
+            self.status = 'confirmed'
+            self.save()
+        else:
+            raise ValueError('Order is not open')
 
     def cancel_order_within_time(self):
         if self.order_date < datetime.now() + timedelta(minutes=5):
@@ -123,18 +134,6 @@ class Order(models.Model):
 
 
 
-
-
-
-
-
-
-
-
-
-
-        return True
-
 class OrderItem(models.Model):
     ITEM_TYPES = [
         ('pizza', 'Pizza'),
@@ -146,4 +145,3 @@ class OrderItem(models.Model):
     content_type = models.CharField(max_length=50, choices=ITEM_TYPES)
     object_id = models.PositiveIntegerField()
     quantity = models.PositiveIntegerField(default=1)
-
