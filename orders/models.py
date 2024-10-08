@@ -41,10 +41,11 @@ class Order(models.Model):
 
     def apply_birthday_freebies(self):
         today = timezone.now().date()
-        if self.customer.birthdate.month == today.month and self.customer.birthdate.day == today.day and not self.customer.is_birthday_freebie:
+        if (self.customer.birthdate.month == today.month and self.customer.birthdate.day == today.day
+                and not self.customer.is_birthday_freebie):
             pizza_free = False
             drink_free = False
-            for item in self.order_menu_items.all():
+            for item in OrderItem.objects.filter(order=self):
                 if item.menu_item.type == 'pizza' and not pizza_free:
                     self.total_price -= item.menu_item.price
                     pizza_free = True
@@ -58,7 +59,7 @@ class Order(models.Model):
             self.discount_applied = True
 
     def calculate_estimated_delivery_time(self):
-        pizza_items = self.order_menu_items.filter(menu_item__type='pizza')
+        pizza_items = OrderItem.objects.filter(order=self, menu_item__type='pizza')
         pizza_quantity = sum([item.quantity for item in pizza_items])
         self.estimated_delivery_time = pizza_quantity * 2 + 10
 
@@ -89,7 +90,7 @@ class Order(models.Model):
             order_item.save()
 
     def update_customer_pizza_count(self):
-        pizza_items = self.order_menu_items.filter(menu_item__type='pizza')
+        pizza_items = OrderItem.objects.filter(order=self, content_type='pizza')
         pizza_quantity = sum([item.quantity for item in pizza_items])
         self.customer.total_pizzas_ordered += pizza_quantity
         self.customer.save()
