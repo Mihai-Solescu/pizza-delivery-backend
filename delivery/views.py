@@ -29,5 +29,3 @@ class DeliveryStatusView():
         else:
             return Response({'error': 'Invalid request'}, status=status.HTTP_400_BAD_REQUEST)
 
-
-class DeliveryPersonView(APIView):

@@ -54,6 +54,28 @@ paths:
       responses:
         '200':
           description: No response body
+  /menu/dessertlist/:
+    get:
+      operationId: menu_dessertlist_retrieve
+      tags:
+      - menu
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          description: No response body
+  /menu/drinklist/:
+    get:
+      operationId: menu_drinklist_retrieve
+      tags:
+      - menu
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          description: No response body
   /menu/ingredientlist/:
     get:
       operationId: menu_ingredientlist_retrieve
@@ -70,6 +92,38 @@ paths:
       operationId: menu_pizzalist_retrieve
       tags:
       - menu
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /orders/{order_id}/cancel/:
+    post:
+      operationId: orders_cancel_create
+      parameters:
+      - in: path
+        name: order_id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - orders
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /orders/{order_id}/status/:
+    get:
+      operationId: orders_status_retrieve
+      parameters:
+      - in: path
+        name: order_id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - orders
       security:
       - jwtAuth: []
       responses:
