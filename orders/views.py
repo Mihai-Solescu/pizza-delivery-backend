@@ -137,6 +137,8 @@ class FinalizeOrderView(APIView):
             return Response({'error': 'No open order found.'}, status=status.HTTP_404_NOT_FOUND)
 
         order.finalize_order()
+        order.process_order()
+
         return Response({'message': 'Order finalized.'}, status=status.HTTP_200_OK)
 
 class EarningAPIView(APIView):
@@ -150,3 +152,27 @@ class EarningAPIView(APIView):
 
         total_earnings = orders.aggregate(Sum('total_price'))['total_price__sum'] or 0
         return Response({'Earnings': total_earnings})
+
+
+class OrderStatusView(APIView):
+    def get(self, request, order_id):
+        try:
+            order = Order.objects.get(pk=order_id)
+            return Response({
+                'order_id': order.pk,
+                'status': order.status,
+                'estimated_delivery_time': order.estimated_delivery_time
+            }, status=status.HTTP_200_OK)
+        except Order.DoesNotExist:
+            return Response({'error': 'Order does not exist'}, status=status.HTTP_404_NOT_FOUND)
+
+class OrderCancelView(APIView):
+    def post(self, request, order_id):
+        try:
+            order = Order.objects.get(pk=order_id)
+            if order.cancel_order_within_time():
+                return Response({'status': 'Order canceled'}, status=status.HTTP_200_OK)
+            else:
+                return Response({'error': 'Cant modify order'}, status=status.HTTP_400_BAD_REQUEST)
+        except Order.DoesNotExist:
+            return Response({'error': 'Order does not exist'}, status=status.HTTP_404_NOT_FOUND)

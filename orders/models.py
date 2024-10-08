@@ -115,23 +115,36 @@ class Order(models.Model):
         else:
             return False
 
+    def get_orders_of_past_three_minutes_with_same_address(self):
+        three_minutes_ago = timezone.now() - timedelta(minutes=3)
+        return Order.objects.filter(
+            order_date__gte=three_minutes_ago,
+            customer__address_line=self.delivery.delivery_address
+        )
+
     def check_order_combinations(self):
-        ordersOfPastThreeMinsWithSameAddress = self.delivery.objects.filter(order_id__order_date__gte=datetime.now() - timedelta(minutes=3),
-                                                                            order__customer__address_line=Delivery.delivery_address)
-        for order in ordersOfPastThreeMinsWithSameAddress:
+        orders = self.get_orders_of_past_three_minutes_with_same_address()
+        for order in orders:
             if order.delivery == self.delivery:
-                return
-
-            pizzas = OrderItem.objects.filter(order_id=order.order_id, content_type='pizza')
-            for pizza in pizzas:
-                if pizza.quantity + self.delivery.pizza_quantity > 3:
-                    return False
-
-                self.delivery.pizza_quantity += pizza.quantity
-
+                continue
+            pizzas = OrderItem.objects.filter(order=order, content_type='pizza')
+            order_pizza_quantity = sum(pizza.quantity for pizza in pizzas)
+            combined_pizza_quantity = self.delivery.pizza_quantity + order_pizza_quantity
+            if combined_pizza_quantity > 3:
+                return False
+            self.delivery.pizza_quantity += order_pizza_quantity
             self.delivery.save()
-
+            order.delivery = self.delivery
+            order.save()
         return True
+
+    def update_delivery_with_order(self, order):
+        pizzas = OrderItem.objects.filter(order=order, content_type='pizza')
+        order_pizza_quantity = sum(pizza.quantity for pizza in pizzas)
+        self.delivery.pizza_quantity += order_pizza_quantity
+        order.delivery = self.delivery
+        order.save()
+        self.delivery.save()
 
 
 class OrderItem(models.Model):
