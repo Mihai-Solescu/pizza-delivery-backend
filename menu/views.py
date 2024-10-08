@@ -23,12 +23,19 @@ class IngredientListView(APIView):
         serializer = IngredientSerializer(ingredients, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
-class DesertListView(APIView):
-    permission_classes = [permissions.AllowAny]
-    queryset = Dessert.objects.all()
-    serializer_class = DessertSerializer
-
 class DrinkListView(APIView):
     permission_classes = [permissions.AllowAny]
-    queryset = Drink.objects.all()
-    serializer_class = DrinkSerializer
+
+    def get(self, request):
+        drinks = Drink.objects.all()
+        serializer = DrinkSerializer(drinks, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+class DessertListView(APIView):
+    permission_classes = [permissions.AllowAny]
+
+    def get(self, request):
+        desserts = Dessert.objects.all()
+        serializer = DessertSerializer(desserts, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
