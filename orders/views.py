@@ -9,7 +9,68 @@ from datetime import date, timedelta
 import calendar
 
 from menu.models import Pizza, Drink, Dessert
+from menu.serializers import PizzaSerializer, DrinkSerializer, DessertSerializer
 from .models import Order
+
+
+class GetOrderItemsView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        # Get the customer associated with the user
+        user = request.user
+
+        try:
+            # Fetch the open order for the customer
+            order = Order.objects.get(customer=user.customer_profile, status='open')
+        except Order.DoesNotExist:
+            return Response({'error': 'No open order found.'}, status=status.HTTP_404_NOT_FOUND)
+
+        # Get all order items associated with the open order
+        order_items = order.items.all()  # 'items' is the related name in OrderItem model
+
+        # Initialize lists to store pizzas, drinks, and desserts
+        pizzas = []
+        drinks = []
+        desserts = []
+
+        # Loop through all the order items and categorize them based on content_type
+        for item in order_items:
+            if item.content_type == 'pizza':
+                try:
+                    pizza = Pizza.objects.get(pizza_id=item.object_id)
+                    pizzas.append({
+                        'pizza': PizzaSerializer(pizza).data,
+                        'quantity': item.quantity
+                    })
+                except Pizza.DoesNotExist:
+                    continue
+            elif item.content_type == 'drink':
+                try:
+                    drink = Drink.objects.get(drink_id=item.object_id)
+                    drinks.append({
+                        'drink': DrinkSerializer(drink).data,
+                        'quantity': item.quantity
+                    })
+                except Drink.DoesNotExist:
+                    continue
+            elif item.content_type == 'dessert':
+                try:
+                    dessert = Dessert.objects.get(dessert_id=item.object_id)
+                    desserts.append({
+                        'dessert': DessertSerializer(dessert).data,
+                        'quantity': item.quantity
+                    })
+                except Dessert.DoesNotExist:
+                    continue
+
+        # Return the items categorized as pizzas, drinks, and desserts
+        return Response({
+            'pizzas': pizzas,
+            'drinks': drinks,
+            'desserts': desserts,
+        }, status=status.HTTP_200_OK)
+
 
 class AddItemToOrder(APIView):
     permission_classes = [IsAuthenticated]
@@ -59,7 +120,6 @@ class FinalizeOrderView(APIView):
             'estimated_delivery_time': order.estimated_delivery_time,
             'total_price': str(order.total_price)
         }, status=status.HTTP_200_OK)
-
 
 class EarningAPIView(APIView):
     permission_classes = [IsAdminUser]
