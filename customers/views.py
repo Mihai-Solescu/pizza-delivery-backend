@@ -114,7 +114,7 @@ class UserPreferencesView(APIView):
                 'is_vegetarian': serializer.data['is_vegetarian'],
                 'is_vegan': serializer.data['is_vegan'],
                 'pizza_size': serializer.data['pizza_size'],
-                'budget_range': serializer.data['budget_range'],  # Convert Decimal to string
+                'budget_range': serializer.data['budget_range'],
                 'toppings': []  # Initialize toppings list
             }
 

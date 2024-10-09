@@ -86,7 +86,7 @@ class UserPreferences(models.Model):
     ])
 
     # Budget Range (Use numeric ranges or midpoints for similarity calculations)
-    budget_range = models.IntegerField(default=7)# Ensure unique user-pizza combinations
+    budget_range = models.FloatField(default=7.0)# Ensure unique user-pizza combinations
 
 
 class CustomerData(models.Model):

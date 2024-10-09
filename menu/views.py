@@ -2,8 +2,9 @@ from rest_framework.response import Response
 from rest_framework import permissions, status
 from rest_framework.views import APIView
 from django.shortcuts import get_object_or_404
-from .models import Pizza, Ingredient, Dessert, Drink, UserPizzaTag
+from .models import Pizza, Ingredient, Dessert, Drink, UserPizzaTag, PizzaIngredientLink
 from .serializers import PizzaSerializer, IngredientSerializer, DessertSerializer, DrinkSerializer
+from decimal import Decimal
 
 class PizzaListViewSet(APIView):
     permission_classes = [permissions.IsAuthenticated]
@@ -12,9 +13,52 @@ class PizzaListViewSet(APIView):
 
         print(request.user)
 
+        # Get query parameters from the request
+        filtered = request.query_params.get('filtered', 'false').lower() == 'true'
+        budget_range = request.query_params.get('budget_range', None)
+        is_vegetarian = request.query_params.get('is_vegetarian', None)
+        is_vegan = request.query_params.get('is_vegan', None)
+
+        # Filter the pizza queryset based on the request parameters
         pizzas = Pizza.objects.all()
+
+        # Filter based on budget_range if provided
+        print("vegan: " + str(is_vegan) + " request:" + request.query_params.get('is_vegan', None))
+        print("vegetarian: " + str(is_vegetarian) + " request:" + request.query_params.get('is_vegetarian', None))
+
+        if filtered:
+            if budget_range:
+                budget_max = Decimal(budget_range)  # Only the max price is provided
+                print("max budget:" + str(budget_max))
+                pizzas = [pizza for pizza in pizzas if self._calculate_price(pizza) <= budget_max]
+
+            # Filter based on vegetarian and vegan requirements
+            if is_vegetarian is not None:
+                is_vegetarian = is_vegetarian.lower() == 'true'
+                if is_vegetarian:
+                    pizzas = [pizza for pizza in pizzas if
+                              all(ingredient.is_vegetarian for ingredient in self._get_ingredients(pizza)) == is_vegetarian]
+
+            if is_vegan is not None:
+                is_vegan = is_vegan.lower() == 'true'
+                if is_vegan:
+                    pizzas = [pizza for pizza in pizzas if
+                              all(ingredient.is_vegan for ingredient in self._get_ingredients(pizza)) == is_vegan]
+
+        # Serialize the filtered pizzas
         serializer = PizzaSerializer(pizzas, many=True, context={'request': request})
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+    def _calculate_price(self, pizza):
+        """Helper function to calculate total price of the pizza."""
+        labor_price = Decimal(0.5)
+        ingredients = PizzaIngredientLink.objects.filter(pizza=pizza).select_related('ingredient')
+        total_ingredient_cost = sum(i.ingredient.cost for i in ingredients)
+        return total_ingredient_cost + labor_price
+
+    def _get_ingredients(self, pizza):
+        """Helper function to get ingredients of a pizza."""
+        return Ingredient.objects.filter(pizzaingredientlink__pizza=pizza)
 
 class PizzaUserTagsView(APIView):
     permission_classes = [permissions.IsAuthenticated]
@@ -95,6 +139,7 @@ class PizzaUserTagsView(APIView):
         }
 
         return Response(response_data, status=status.HTTP_200_OK)
+
 
 
 class IngredientListView(APIView):

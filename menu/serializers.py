@@ -69,6 +69,7 @@ class PizzaSerializer(serializers.ModelSerializer):
         """Helper method to retrieve ingredients."""
         return PizzaIngredientLink.objects.filter(pizza=obj).select_related('ingredient')
 
+
 class DrinkSerializer(serializers.ModelSerializer):
     class Meta:
         model = Drink
