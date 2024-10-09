@@ -18,24 +18,18 @@ class GetOrderItemsView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        # Get the customer associated with the user
         user = request.user
 
         try:
-            # Fetch the open order for the customer
             order, created = Order.objects.get_or_create(customer=user.customer_profile, status='open')
         except Order.MultipleObjectsReturned:
             return Response({'error': 'Multiple open orders found.'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-        # Get all order items associated with the open order
-        order_items = order.items.all()  # 'items' is the related name in OrderItem model
-
-        # Initialize lists to store pizzas, drinks, and desserts
+        order_items = order.items.all()
         pizzas = []
         drinks = []
         desserts = []
 
-        # Loop through all the order items and categorize them based on content_type
         for item in order_items:
             if item.content_type == 'pizza':
                 try:
@@ -65,7 +59,6 @@ class GetOrderItemsView(APIView):
                 except Dessert.DoesNotExist:
                     continue
 
-        # Return the items categorized as pizzas, drinks, and desserts
         return Response({
             'pizzas': pizzas,
             'drinks': drinks,

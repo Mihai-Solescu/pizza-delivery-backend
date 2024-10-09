@@ -16,4 +16,3 @@ urlpatterns = [
     path('<int:order_id>/status/', OrderStatusView.as_view()),
     path('<int:order_id>/cancel/', OrderCancelView.as_view())
 ]
-
