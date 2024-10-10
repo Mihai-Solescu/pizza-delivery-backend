@@ -1,7 +1,7 @@
 from decimal import Decimal
 
 from rest_framework import serializers
-from .models import Pizza, Ingredient, Dessert, Drink, PizzaIngredientLink, UserPizzaTag
+from .models import Pizza, Ingredient, Dessert, Drink, PizzaIngredientLink, UserPizzaTag, UserPizzaRating
 from django.db.models import Sum
 
 class IngredientSerializer(serializers.ModelSerializer):
@@ -15,6 +15,7 @@ class PizzaSerializer(serializers.ModelSerializer):
     is_vegan = serializers.SerializerMethodField()
     is_vegetarian = serializers.SerializerMethodField()
     tags = serializers.SerializerMethodField()
+    rating = serializers.SerializerMethodField()
 
     class Meta:
         model = Pizza
@@ -64,6 +65,18 @@ class PizzaSerializer(serializers.ModelSerializer):
             'vegetarian_tag': user_pizza_tag.vegetarian_tag,  # Will be updated if pizza is vegetarian
             'vegan_tag': user_pizza_tag.vegan_tag,  # Will be updated if pizza is vegan
         }
+
+    def get_rating(self, obj):
+        user = self.context['request'].user
+        user_pizza_rating, created = UserPizzaRating.objects.get_or_create(
+            user=user,
+            pizza=obj,
+            defaults={
+                'rating': 2
+            }
+        )
+
+        return user_pizza_rating.rating
 
     def _get_ingredients(self, obj):
         """Helper method to retrieve ingredients."""

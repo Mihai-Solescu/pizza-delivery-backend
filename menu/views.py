@@ -2,7 +2,7 @@ from rest_framework.response import Response
 from rest_framework import permissions, status
 from rest_framework.views import APIView
 from django.shortcuts import get_object_or_404
-from .models import Pizza, Ingredient, Dessert, Drink, UserPizzaTag, PizzaIngredientLink
+from .models import Pizza, Ingredient, Dessert, Drink, UserPizzaTag, PizzaIngredientLink, UserPizzaRating
 from .serializers import PizzaSerializer, IngredientSerializer, DessertSerializer, DrinkSerializer
 from decimal import Decimal
 
@@ -136,6 +136,37 @@ class PizzaUserTagsView(APIView):
             'rate_tag': user_pizza_tag.rate_tag,
             'order_tag': user_pizza_tag.order_tag,
             'try_tag': user_pizza_tag.try_tag,
+        }
+
+        return Response(response_data, status=status.HTTP_200_OK)
+
+
+class PizzaUserRatingView(APIView):
+    def post(self, request, pizza_id):
+        # Get the pizza object
+        pizza = get_object_or_404(Pizza, pizza_id=pizza_id)
+        user = request.user  # Get the currently authenticated user
+
+        # Check if UserPizzaTag exists for this user and pizza
+        user_pizza_rating, created = UserPizzaRating.objects.get_or_create(
+            user=user,
+            pizza=pizza,
+            defaults={
+                'rating': 2,
+            }
+        )
+
+        # Get data from the request
+        rating = request.data.get('rating', False)
+
+        # Update the tags
+        user_pizza_rating.rating = rating
+        user_pizza_rating.save()
+
+        # Prepare the response data
+        response_data = {
+            'pizza_id': pizza.pizza_id,
+            'rating': user_pizza_rating.rating,
         }
 
         return Response(response_data, status=status.HTTP_200_OK)

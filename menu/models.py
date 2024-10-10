@@ -20,6 +20,14 @@ class UserPizzaTag(models.Model):
     class Meta:
         unique_together = ('user', 'pizza')
 
+class UserPizzaRating(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    pizza = models.ForeignKey(Pizza, on_delete=models.CASCADE)
+    rating = models.IntegerField(default=3)
+
+    class Meta:
+        unique_together = ('user', 'pizza')
+
 class Drink(models.Model):
     drink_id = models.AutoField(primary_key=True)
     name = models.CharField(max_length=30)
