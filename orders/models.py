@@ -3,6 +3,8 @@ from datetime import datetime, timedelta
 from django.db import models
 from decimal import Decimal
 from django.utils import timezone
+from django.contrib.contenttypes.models import ContentType
+from django.contrib.contenttypes.fields import GenericForeignKey
 from customers.models import Customer
 from delivery.models import Delivery
 from menu.models import Ingredient, Dessert, Drink, Pizza
@@ -155,6 +157,7 @@ class OrderItem(models.Model):
     ]
 
     order = models.ForeignKey('Order', on_delete=models.CASCADE, related_name='items')
-    content_type = models.CharField(max_length=50, choices=ITEM_TYPES)
+    content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
     object_id = models.PositiveIntegerField()
+    content_object = GenericForeignKey('content_type', 'object_id')  # Link to any model (e.g., Pizza, Drink, Dessert)
     quantity = models.PositiveIntegerField(default=1)

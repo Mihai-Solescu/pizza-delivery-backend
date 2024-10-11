@@ -2,19 +2,22 @@ from rest_framework.response import Response
 from rest_framework import permissions, status
 from rest_framework.views import APIView
 from django.shortcuts import get_object_or_404
+from django.db.models import Sum, Min
+from django.contrib.contenttypes.models import ContentType
+
+from orders.models import OrderItem
 from .models import Pizza, Ingredient, Dessert, Drink, UserPizzaTag, PizzaIngredientLink, UserPizzaRating
 from .serializers import PizzaSerializer, IngredientSerializer, DessertSerializer, DrinkSerializer
 from decimal import Decimal
+
 
 class PizzaListViewSet(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def get(self, request):
-
-        print(request.user)
-
         # Get query parameters from the request
-        filtered = request.query_params.get('filtered', 'false').lower() == 'true'
+        smart = request.query_params.get('smart', 'false').lower() == 'true'
+        order_type = request.query_params.get('order_type', None)
         budget_range = request.query_params.get('budget_range', None)
         is_vegetarian = request.query_params.get('is_vegetarian', None)
         is_vegan = request.query_params.get('is_vegan', None)
@@ -22,32 +25,53 @@ class PizzaListViewSet(APIView):
         # Filter the pizza queryset based on the request parameters
         pizzas = Pizza.objects.all()
 
-        # Filter based on budget_range if provided
-        print("vegan: " + str(is_vegan) + " request:" + request.query_params.get('is_vegan', None))
-        print("vegetarian: " + str(is_vegetarian) + " request:" + request.query_params.get('is_vegetarian', None))
+        if order_type == 'normal':
+            if smart:
+                pizzas = self._pref_filter(budget_range, is_vegetarian, is_vegan, pizzas)
 
-        if filtered:
-            if budget_range:
-                budget_max = Decimal(budget_range)  # Only the max price is provided
-                print("max budget:" + str(budget_max))
-                pizzas = [pizza for pizza in pizzas if self._calculate_price(pizza) <= budget_max]
+            # Serialize the smart filtered pizzas
+            serializer = PizzaSerializer(pizzas, many=True, context={'request': request})
+        else:
+            pizzas = self._pref_filter(budget_range, is_vegetarian, is_vegan, pizzas)
 
-            # Filter based on vegetarian and vegan requirements
-            if is_vegetarian is not None:
-                is_vegetarian = is_vegetarian.lower() == 'true'
-                if is_vegetarian:
-                    pizzas = [pizza for pizza in pizzas if
-                              all(ingredient.is_vegetarian for ingredient in self._get_ingredients(pizza)) == is_vegetarian]
+            if smart:
+                print("needs implementation")
+            else:
+                # Enhance quick order: return only one pizza sorted by popularity
+                pizzas = self._get_most_popular_pizza(pizzas)
 
-            if is_vegan is not None:
-                is_vegan = is_vegan.lower() == 'true'
-                if is_vegan:
-                    pizzas = [pizza for pizza in pizzas if
-                              all(ingredient.is_vegan for ingredient in self._get_ingredients(pizza)) == is_vegan]
+            # Serialize the pizzas
+            serializer = PizzaSerializer(pizzas, many=True, context={'request': request})
 
-        # Serialize the filtered pizzas
-        serializer = PizzaSerializer(pizzas, many=True, context={'request': request})
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+    def _get_most_popular_pizza(self, pizzas):
+        """Return the most popular pizza based on total quantity ordered."""
+        # Ensure pizzas is a queryset
+        if pizzas is None:
+            return Pizza.objects.none()  # Return an empty queryset
+
+        # Get the content type for Pizza
+        pizza_content_type = ContentType.objects.get_for_model(Pizza)
+
+        # Query OrderItems related to pizzas and sum their quantities
+        order_items = OrderItem.objects.filter(content_type=pizza_content_type) \
+            .values('object_id') \
+            .annotate(total_quantity=Sum('quantity')) \
+            .order_by('-total_quantity')
+
+        # Extract the most popular pizza object_id
+        most_popular_pizza_id = order_items[0]['object_id'] if order_items else None
+
+        if most_popular_pizza_id:
+            # Return the most popular pizza based on the object_id as a list
+            most_popular_pizza = pizzas.filter(id=most_popular_pizza_id).first()
+            if most_popular_pizza:
+                return [most_popular_pizza]
+
+        # If no popular pizza is found, return the first available pizza as a list
+        first_pizza = pizzas.first() if pizzas.exists() else None
+        return [first_pizza] if first_pizza else []
 
     def _calculate_price(self, pizza):
         """Helper function to calculate total price of the pizza."""
@@ -59,6 +83,33 @@ class PizzaListViewSet(APIView):
     def _get_ingredients(self, pizza):
         """Helper function to get ingredients of a pizza."""
         return Ingredient.objects.filter(pizzaingredientlink__pizza=pizza)
+
+    def _pref_filter(self, budget_range, is_vegetarian, is_vegan, pizzas):
+        # Budget filter
+        if budget_range:
+            budget_max = Decimal(budget_range)
+            pizzas = pizzas.filter(id__in=[
+                pizza.id for pizza in pizzas if self._calculate_price(pizza) <= budget_max
+            ])
+
+        # Vegetarian filter
+        if is_vegetarian is not None:
+            is_vegetarian = is_vegetarian.lower() == 'true'
+            if is_vegetarian:
+                pizzas = pizzas.annotate(
+                    all_veg=Min('pizzaingredientlink__ingredient__is_vegetarian')
+                ).filter(all_veg=True).distinct()
+
+        # Vegan filter
+        if is_vegan is not None:
+            is_vegan = is_vegan.lower() == 'true'
+            if is_vegan:
+                pizzas = pizzas.annotate(
+                    all_vegan=Min('pizzaingredientlink__ingredient__is_vegan')
+                ).filter(all_vegan=True).distinct()
+
+        return pizzas
+
 
 class PizzaUserTagsView(APIView):
     permission_classes = [permissions.IsAuthenticated]
@@ -92,7 +143,7 @@ class PizzaUserTagsView(APIView):
 
         # Prepare the response data
         response_data = {
-            'pizza_id': pizza.pizza_id,
+            'pizza_id': pizza.id,
             'name': pizza.name,
             'description': pizza.description,
             'vegetarian_tag': user_pizza_tag.vegetarian_tag,
@@ -132,7 +183,7 @@ class PizzaUserTagsView(APIView):
 
         # Prepare the response data
         response_data = {
-            'pizza_id': pizza.pizza_id,
+            'pizza_id': pizza.id,
             'rate_tag': user_pizza_tag.rate_tag,
             'order_tag': user_pizza_tag.order_tag,
             'try_tag': user_pizza_tag.try_tag,
@@ -165,7 +216,7 @@ class PizzaUserRatingView(APIView):
 
         # Prepare the response data
         response_data = {
-            'pizza_id': pizza.pizza_id,
+            'pizza_id': pizza.id,
             'rating': user_pizza_rating.rating,
         }
 
