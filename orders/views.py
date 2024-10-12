@@ -13,6 +13,8 @@ import calendar
 from menu.models import Pizza, Drink, Dessert
 from menu.serializers import PizzaSerializer, DrinkSerializer, DessertSerializer
 from .models import Order, OrderItem
+from .serializers import OrderSerializer
+
 
 class GetOrderItemsView(APIView):
     permission_classes = [IsAuthenticated]
@@ -180,18 +182,24 @@ class EarningAPIView(APIView):
         return Response({'Earnings': total_earnings}, status=status.HTTP_200_OK)
 
 
-class OrderStatusView(APIView):
+class LatestOrderStatusView(APIView):
     permission_classes = [IsAuthenticated]
 
-    def get(self, request, order_id):
+    def get(self, request):
         try:
-            order = Order.objects.get(pk=order_id, customer=request.user.customer_profile)
-            serializer = OrderSerializer(order)
-            print(serializer.data)
-            return Response(serializer.data, status=status.HTTP_200_OK)
+            latest_order = Order.objects.filter(customer=request.user.customer_profile).order_by('-order_date').first()
+
+            if latest_order:
+                return Response({
+                    'id': latest_order.pk,
+                    'status': latest_order.status,
+                    'estimated_delivery_time': latest_order.estimated_delivery_time,
+                }, status=status.HTTP_200_OK)
+            else:
+                return Response({'error': 'No orders found for this user.'}, status=status.HTTP_404_NOT_FOUND)
+
         except Order.DoesNotExist:
-            return Response({'error': 'Order does not exist or you do not have permission to view it.'},
-                            status=status.HTTP_404_NOT_FOUND)
+            return Response({'error': 'Order does not exist.'}, status=status.HTTP_404_NOT_FOUND)
 
 class OrderCancelView(APIView):
     def post(self, request, order_id):
