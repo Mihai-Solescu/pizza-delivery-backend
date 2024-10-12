@@ -32,11 +32,7 @@ class PizzaSerializer(serializers.ModelSerializer):
         ]
 
     def get_price(self, obj):
-        ingredients = PizzaIngredientLink.objects.filter(pizza=obj).select_related('ingredient')
-        labor_price = Decimal(0.5)  # Adjust as needed
-        total_ingredient_cost = sum(i.ingredient.cost for i in ingredients)
-        total_price = total_ingredient_cost + labor_price
-        return round(total_price, 3)
+        return round(obj.get_price(), 3)
 
     def get_is_vegan(self, obj):
         return all(i.ingredient.is_vegan for i in self._get_ingredients(obj))

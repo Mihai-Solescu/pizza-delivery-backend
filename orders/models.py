@@ -75,20 +75,24 @@ class Order(models.Model):
         The most expensive pizza will be free if it's a birthday freebie.
         """
         total_price = Decimal('0.00')
-        pizzas = self.items.filter(content_type='pizza')
 
-        # Find the most expensive pizza
-        if pizzas.exists():
-            most_expensive_pizza = max(pizzas, key=lambda item: item.get_price())
-            if self.freebie_applied:
-                pizzas = pizzas.exclude(id=most_expensive_pizza.id)
+        pizzas = []
 
-        for item in self.items.all():
-            total_price += item.get_price() * item.quantity
+        items = self.items.all()
+        for item in items:
+            if str(item.content_type) == 'Menu | pizza':
+                total_price += item.content_object.get_price() * item.quantity
+                pizzas.append(item.content_object)
+            elif str(item.content_type) == 'Menu | drink':
+                total_price += item.content_object.price * item.quantity
+            elif str(item.content_type) == 'Menu | dessert':
+                total_price += item.content_object.price * item.quantity
+            else:
+                raise ValueError('Invalid item type')
 
-        # Apply loyalty discount or discount code (10%)
-        if self.discount_applied:
-            total_price *= Decimal('0.9')
+        most_expensive_pizza = max(pizzas, key=lambda item: item.get_price())
+        if self.freebie_applied:
+            total_price -= most_expensive_pizza.get_price()
 
         return round(total_price, 2)
 
