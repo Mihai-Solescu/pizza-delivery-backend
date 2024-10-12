@@ -129,9 +129,7 @@ class FinalizeOrderView(APIView):
         if not order:
             return Response({'error': 'No open order found.'}, status=status.HTTP_404_NOT_FOUND)
 
-        order.finalize_order()
-        order.process_order()
-
+        order.()
         return Response({'message': 'Order finalized.'}, status=status.HTTP_200_OK)
 
 class EarningAPIView(APIView):
