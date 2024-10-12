@@ -29,6 +29,7 @@ class GetOrderItemsView(APIView):
 
         order_items = order.items.all()
 
+        # Initialize lists to store pizzas, drinks, and desserts
         pizzas = []
         drinks = []
         desserts = []
@@ -43,10 +44,6 @@ class GetOrderItemsView(APIView):
             elif item.content_type == 'dessert':
                 dessert = get_object_or_404(Dessert, id=item.object_id)
                 desserts.append({'dessert': DessertSerializer(dessert).data, 'quantity': item.quantity})
-
-        print(pizzas)
-        print(drinks)
-        print(desserts)
 
         return Response({
             'pizzas': pizzas,
@@ -82,8 +79,6 @@ class AddItemToOrder(APIView):
         item_type = request.data.get('item_type')
         item_id = request.data.get('item_id')
         quantity = int(request.data.get('quantity', 1))
-
-        print(item_id)
 
         if item_type == 'pizza':
             item = get_object_or_404(Pizza, id=item_id)
