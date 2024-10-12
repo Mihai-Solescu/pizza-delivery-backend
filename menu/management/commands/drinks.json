@@ -1,7 +1,7 @@
 [
-    {"drink_id": 1, "name": "Coca-Cola", "price": 1.500},
-    {"drink_id": 2, "name": "Pepsi", "price": 1.500},
-    {"drink_id": 3, "name": "Sprite", "price": 1.400},
-    {"drink_id": 4, "name": "Fanta", "price": 1.300},
-    {"drink_id": 5, "name": "Mountain Dew", "price": 1.600}
+    {"id": 1, "name": "Coca-Cola", "price": 1.500},
+    {"id": 2, "name": "Pepsi", "price": 1.500},
+    {"id": 3, "name": "Sprite", "price": 1.400},
+    {"id": 4, "name": "Fanta", "price": 1.300},
+    {"id": 5, "name": "Mountain Dew", "price": 1.600}
 ]

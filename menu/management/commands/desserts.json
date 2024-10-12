@@ -1,7 +1,7 @@
 [
-    {"dessert_id": 1, "name": "Chocolate Cake", "price": 2.500},
-    {"dessert_id": 2, "name": "Ice Cream", "price": 2.000},
-    {"dessert_id": 3, "name": "Brownie", "price": 2.300},
-    {"dessert_id": 4, "name": "Cheesecake", "price": 2.800},
-    {"dessert_id": 5, "name": "Tiramisu", "price": 3.000}
+    {"id": 1, "name": "Chocolate Cake", "price": 2.500},
+    {"id": 2, "name": "Ice Cream", "price": 2.000},
+    {"id": 3, "name": "Brownie", "price": 2.300},
+    {"id": 4, "name": "Cheesecake", "price": 2.800},
+    {"id": 5, "name": "Tiramisu", "price": 3.000}
 ]

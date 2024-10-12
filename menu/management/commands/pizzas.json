@@ -1,7 +1,7 @@
 [
-    {"pizza_id": 1, "name": "Margherita"},
-    {"pizza_id": 2, "name": "Pepperoni"},
-    {"pizza_id": 3, "name": "BBQ Chicken"},
-    {"pizza_id": 4, "name": "Vegetarian"},
-    {"pizza_id": 5, "name": "Hawaiian"}
+    {"id": 1, "name": "Margherita"},
+    {"id": 2, "name": "Pepperoni"},
+    {"id": 3, "name": "BBQ Chicken"},
+    {"id": 4, "name": "Vegetarian"},
+    {"id": 5, "name": "Hawaiian"}
 ]

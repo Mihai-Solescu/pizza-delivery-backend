@@ -40,13 +40,13 @@ class GetOrderItemsView(APIView):
             print (item.content_type)
             if str(item.content_type) == 'Menu | pizza':
                 pizza = get_object_or_404(Pizza, id=item.object_id)
-                pizzas.append({'pizza': PizzaSerializer(pizza).data, 'quantity': item.quantity})
+                pizzas.append({'pizza': PizzaSerializer(pizza, many=False, context={'request' : request}).data, 'quantity': item.quantity})
             elif item.content_type == 'Menu | drink':
                 drink = get_object_or_404(Drink, id=item.object_id)
-                drinks.append({'drink': DrinkSerializer(drink).data, 'quantity': item.quantity})
+                drinks.append({'drink': DrinkSerializer(drink, many=False, context={'request' : request}).data, 'quantity': item.quantity})
             elif item.content_type == 'Menu | dessert':
                 dessert = get_object_or_404(Dessert, id=item.object_id)
-                desserts.append({'dessert': DessertSerializer(dessert).data, 'quantity': item.quantity})
+                desserts.append({'dessert': DessertSerializer(dessert, many=False, context={'request' : request}).data, 'quantity': item.quantity})
 
         print (pizzas)
 
