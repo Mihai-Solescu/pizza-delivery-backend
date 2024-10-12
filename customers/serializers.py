@@ -54,6 +54,7 @@ class CustomerRegisterSerializer(serializers.ModelSerializer):
         customer = Customer.objects.create(user=user, **validated_data)
         customer.discount_code = f'{customer.user.username}'
         customer.save()
+        user.save()
         return customer
 
 
