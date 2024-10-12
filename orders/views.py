@@ -126,8 +126,6 @@ class FinalizeOrderView(APIView):
         if not order:
             return Response({'error': 'No open order found.'}, status=status.HTTP_404_NOT_FOUND)
 
-        print (request.data)
-
         # Process the order (calculate total price, apply discounts, freebies, etc.)
         order.process_order()
         return Response({
@@ -141,7 +139,7 @@ class OrderTotalPriceView(APIView):
 
     def get(self, request):
         user = request.user
-        order = Order.objects.filter(customer=user.customer_profile, status='open').first()
+        order, create = Order.objects.get_or_create(customer=user.customer_profile, status='open')
 
         if not order:
             return Response({'error': 'No open order found.'}, status=status.HTTP_404_NOT_FOUND)

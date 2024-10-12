@@ -115,10 +115,12 @@ class Order(models.Model):
             order_item.delete()
 
     def update_customer_pizza_count(self):
-        pizza_items = OrderItem.objects.filter(order=self, content_type='pizza')
+        pizza_content_type = ContentType.objects.get_for_model(Pizza)  # Get the correct content type for Pizza
+        pizza_items = OrderItem.objects.filter(order=self, content_type=pizza_content_type)  # Filter by content type
         pizza_quantity = sum([item.quantity for item in pizza_items])
         self.customer.total_pizzas_ordered += pizza_quantity
         self.customer.save()
+        print(self.customer.total_pizzas_ordered)
 
     def process_order(self):
         if self.status == 'open':
@@ -128,15 +130,19 @@ class Order(models.Model):
             self.update_customer_pizza_count()
             # delivery
             self.calculate_estimated_delivery_time()
+            print ('Order processed')
             self.status = 'confirmed'
+            print('Order confirmed')
             self.save()
+            print('Order processed')
         else:
             raise ValueError('Order is not open')
 
     def calculate_estimated_delivery_time(self):
-        pizza_items = self.order_menu_items.filter(menu_item__type='pizza')
+        pizza_content_type = ContentType.objects.get_for_model(Pizza)  # Get the ContentType for Pizza
+        pizza_items = OrderItem.objects.filter(order=self, content_type=pizza_content_type)  # Filter by the correct content type
         pizza_quantity = sum([item.quantity for item in pizza_items])
-        self.estimated_delivery_time = pizza_quantity * 2 + 10
+        self.estimated_delivery_time = pizza_quantity * 2 + 10  # Example logic: 2 minutes per pizza + 10 minutes base time
 
     def cancel_order_within_time(self):
         if self.order_date < datetime.now() + timedelta(minutes=5):
