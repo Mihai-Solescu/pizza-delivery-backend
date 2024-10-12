@@ -3,6 +3,8 @@ from datetime import datetime, timedelta
 from django.db import models
 from decimal import Decimal
 from django.utils import timezone
+from django.contrib.contenttypes.models import ContentType
+from django.contrib.contenttypes.fields import GenericForeignKey
 from customers.models import Customer
 from delivery.models import Delivery
 from menu.models import Ingredient, Dessert, Drink, Pizza
@@ -10,7 +12,7 @@ from menu.models import Ingredient, Dessert, Drink, Pizza
 
 class Order(models.Model):
     customer = models.ForeignKey(Customer, on_delete=models.CASCADE)
-    order_date = models.DateField()
+    order_date = models.DateField(null=True, blank=True)
     STATUS_CHOICES = [
         ('open', 'Open'),
         ('confirmed', 'Confirmed'),
@@ -20,15 +22,16 @@ class Order(models.Model):
     ]
     status = models.CharField(max_length=50, choices=STATUS_CHOICES, default="open")
     delivery = models.ForeignKey('delivery.Delivery', blank=True, null=True, on_delete=models.CASCADE)
-    status = models.CharField(max_length=50, default="pending")
     total_price = models.DecimalField(decimal_places=3, max_digits=8, default=Decimal('0.00'))
     discount_applied = models.BooleanField(default=False)
+    freebie_applied = models.BooleanField(default=False)
     estimated_delivery_time = models.IntegerField(blank=True, null=True)
 
     def apply_loyalty_discount(self):
         if self.customer.total_pizzas_ordered >= 10:
             self.total_price *= Decimal('0.9')
             self.customer.total_pizzas_ordered -= 10
+            self.customer.discount_applied = True
             self.customer.save()
             self.discount_applied = True
 
@@ -38,6 +41,7 @@ class Order(models.Model):
             self.customer.discount_code.is_redeemed = True
             self.customer.discount_applied = True
             self.discount_applied = True
+            self.customer.save()
 
     def apply_birthday_freebies(self):
         today = timezone.now().date()
@@ -45,24 +49,44 @@ class Order(models.Model):
                 and not self.customer.is_birthday_freebie):
             pizza_free = False
             drink_free = False
-            for item in OrderItem.objects.filter(order=self):
-                if item.menu_item.type == 'pizza' and not pizza_free:
-                    self.total_price -= item.menu_item.price
+            for item in self.items.all():
+                if item.content_type == 'pizza' and not pizza_free:
                     pizza_free = True
-                elif item.menu_item.type == 'drink' and not drink_free:
-                    self.total_price -= item.menu_item.price
+                elif item.content_type == 'drink' and not drink_free:
                     drink_free = True
                 if pizza_free and drink_free:
                     self.customer.is_birthday_freebie = True
                     self.customer.save()
                     break
-            self.discount_applied = True
+            self.freebie_applied = True
 
     def calculate_estimated_delivery_time(self):
-        pizza_items = OrderItem.objects.filter(order=self, menu_item__type='pizza')
+        pizza_items = self.order_menu_items.filter(menu_item__type='pizza')
         pizza_quantity = sum([item.quantity for item in pizza_items])
         self.estimated_delivery_time = pizza_quantity * 2 + 10
 
+    def calculate_total_price(self):
+        """
+        Calculate the total price, applying any discounts and freebies.
+        The most expensive pizza will be free if it's a birthday freebie.
+        """
+        total_price = Decimal('0.00')
+        pizzas = self.items.filter(content_type='pizza')
+
+        # Find the most expensive pizza
+        if pizzas.exists():
+            most_expensive_pizza = max(pizzas, key=lambda item: item.get_price())
+            if self.freebie_applied:
+                pizzas = pizzas.exclude(id=most_expensive_pizza.id)
+
+        for item in self.items.all():
+            total_price += item.get_price() * item.quantity
+
+        # Apply loyalty discount or discount code (10%)
+        if self.discount_applied:
+            total_price *= Decimal('0.9')
+
+        return round(total_price, 2)
 
     def add_menu_item(self, item, quantity):
         # Determine item type and id
@@ -148,13 +172,8 @@ class Order(models.Model):
 
 
 class OrderItem(models.Model):
-    ITEM_TYPES = [
-        ('pizza', 'Pizza'),
-        ('drink', 'Drink'),
-        ('dessert', 'Dessert'),
-    ]
-
-    order = models.ForeignKey('Order', on_delete=models.CASCADE, related_name='items')
-    content_type = models.CharField(max_length=50, choices=ITEM_TYPES)
-    object_id = models.PositiveIntegerField()
+    order = models.ForeignKey('orders.Order', on_delete=models.CASCADE, related_name='items')
+    content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)  # ForeignKey to ContentType
+    object_id = models.PositiveIntegerField()  # ID of the linked object
+    content_object = GenericForeignKey('content_type', 'object_id')  # Link to any model (e.g., Pizza, Drink, Dessert)
     quantity = models.PositiveIntegerField(default=1)

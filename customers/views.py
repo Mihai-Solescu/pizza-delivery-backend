@@ -7,8 +7,8 @@ from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 import json
 
-from customers.serializers import CustomerRegisterSerializer, UserPreferencesSerializer, CustomerDataSerializer
-from customers.models import UserPreferences, CustomerData, Customer
+from customers.serializers import CustomerRegisterSerializer, CustomerPreferencesSerializer, CustomerDataSerializer
+from customers.models import CustomerPreferences, CustomerData, Customer
 
 
 class LoginView(APIView):
@@ -99,12 +99,12 @@ class CustomerDataView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-class UserPreferencesView(APIView):
+class CustomerPreferencesView(APIView):
     def get(self, request):
         # Get preferences of the authenticated user
         try:
-            preferences = UserPreferences.objects.get(user=request.user)
-            serializer = UserPreferencesSerializer(preferences)
+            preferences = CustomerPreferences.objects.get(user=request.user)
+            serializer = CustomerPreferencesSerializer(preferences)
 
             # Prepare the response
             response_data = {
@@ -114,7 +114,7 @@ class UserPreferencesView(APIView):
                 'is_vegetarian': serializer.data['is_vegetarian'],
                 'is_vegan': serializer.data['is_vegan'],
                 'pizza_size': serializer.data['pizza_size'],
-                'budget_range': serializer.data['budget_range'],  # Convert Decimal to string
+                'budget_range': serializer.data['budget_range'],
                 'toppings': []  # Initialize toppings list
             }
 
@@ -135,7 +135,7 @@ class UserPreferencesView(APIView):
 
             return Response(response_data, status=status.HTTP_200_OK)
 
-        except UserPreferences.DoesNotExist:
+        except CustomerPreferences.DoesNotExist:
             return Response(
                 {"detail": "Preferences not found for this user."},
                 status=status.HTTP_404_NOT_FOUND
@@ -158,7 +158,7 @@ class UserPreferencesView(APIView):
             budget_range = data.get('budget_range', 7.00)
 
             # Update or create user preferences
-            preferences, created = UserPreferences.objects.update_or_create(
+            preferences, created = CustomerPreferences.objects.update_or_create(
                 user=request.user,
                 defaults={
                     'favourite_sauce': favourite_sauce,

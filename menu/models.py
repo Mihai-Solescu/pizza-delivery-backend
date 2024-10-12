@@ -1,11 +1,32 @@
 from django.db import models
 from customers.models import Customer
+from django.contrib.auth.models import User
 # Create your models here.
 
 class Pizza(models.Model):
     pizza_id = models.AutoField(primary_key=True)
     description = models.CharField(max_length=255, default="")
     name = models.CharField(max_length=30)
+
+class UserPizzaTag(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    pizza = models.ForeignKey(Pizza, on_delete=models.CASCADE)
+    rate_tag = models.BooleanField(default=False)
+    order_tag = models.BooleanField(default=False)
+    try_tag = models.BooleanField(default=False)
+    vegetarian_tag = models.BooleanField(default=False)
+    vegan_tag = models.BooleanField(default=False)
+
+    class Meta:
+        unique_together = ('user', 'pizza')
+
+class UserPizzaRating(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    pizza = models.ForeignKey(Pizza, on_delete=models.CASCADE)
+    rating = models.IntegerField(default=3)
+
+    class Meta:
+        unique_together = ('user', 'pizza')
 
 class Drink(models.Model):
     drink_id = models.AutoField(primary_key=True)

@@ -1,16 +1,18 @@
+from platform import system
+
 from django.shortcuts import get_object_or_404
-from rest_framework import generics, status
+from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from rest_framework.response import Response
 from django.core.exceptions import PermissionDenied
 from django.db.models import Sum
-from datetime import date, timedelta
+from datetime import date
 import calendar
 
 from menu.models import Pizza, Drink, Dessert
 from menu.serializers import PizzaSerializer, DrinkSerializer, DessertSerializer
-from .models import Order
+from .models import Order, OrderItem
 from .serializers import OrderSerializer
 
 
@@ -26,38 +28,23 @@ class GetOrderItemsView(APIView):
             return Response({'error': 'Multiple open orders found.'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
         order_items = order.items.all()
+        order_items = order.items.all()
+
+        # Initialize lists to store pizzas, drinks, and desserts
         pizzas = []
         drinks = []
         desserts = []
 
         for item in order_items:
             if item.content_type == 'pizza':
-                try:
-                    pizza = Pizza.objects.get(pizza_id=item.object_id)
-                    pizzas.append({
-                        'pizza': PizzaSerializer(pizza).data,
-                        'quantity': item.quantity
-                    })
-                except Pizza.DoesNotExist:
-                    continue
+                pizza = get_object_or_404(Pizza, pizza_id=item.object_id)
+                pizzas.append({'pizza': PizzaSerializer(pizza).data, 'quantity': item.quantity})
             elif item.content_type == 'drink':
-                try:
-                    drink = Drink.objects.get(drink_id=item.object_id)
-                    drinks.append({
-                        'drink': DrinkSerializer(drink).data,
-                        'quantity': item.quantity
-                    })
-                except Drink.DoesNotExist:
-                    continue
+                drink = get_object_or_404(Drink, drink_id=item.object_id)
+                drinks.append({'drink': DrinkSerializer(drink).data, 'quantity': item.quantity})
             elif item.content_type == 'dessert':
-                try:
-                    dessert = Dessert.objects.get(dessert_id=item.object_id)
-                    desserts.append({
-                        'dessert': DessertSerializer(dessert).data,
-                        'quantity': item.quantity
-                    })
-                except Dessert.DoesNotExist:
-                    continue
+                dessert = get_object_or_404(Dessert, dessert_id=item.object_id)
+                desserts.append({'dessert': DessertSerializer(dessert).data, 'quantity': item.quantity})
 
         return Response({
             'pizzas': pizzas,
@@ -74,7 +61,7 @@ class AddItemToOrder(APIView):
         order, created = Order.objects.get_or_create(
             customer=user.customer_profile,
             status='open',
-            defaults={'order_date': date.today(), 'total_price': 0}
+            defaults={'order_date': date.today()}
         )
 
         item_type = request.data.get('item_type')
@@ -129,8 +116,14 @@ class FinalizeOrderView(APIView):
         if not order:
             return Response({'error': 'No open order found.'}, status=status.HTTP_404_NOT_FOUND)
 
-        order.()
-        return Response({'message': 'Order finalized.'}, status=status.HTTP_200_OK)
+        # Process the order (calculate total price, apply discounts, freebies, etc.)
+        order.process_order()
+        return Response({
+            'message': 'Order finalized.',
+            'total_price': order.calculate_total_price(),  # Call the method to calculate total price
+            'estimated_delivery_time': order.estimated_delivery_time
+        }, status=status.HTTP_200_OK)
+
 
 class EarningAPIView(APIView):
     permission_classes = [IsAdminUser]
@@ -141,8 +134,9 @@ class EarningAPIView(APIView):
         last_day = today.replace(day=calendar.monthrange(today.year, today.month)[1])
         orders = Order.objects.filter(order_date__range=[first_day, last_day])
 
-        total_earnings = orders.aggregate(Sum('total_price'))['total_price__sum'] or 0
-        return Response({'Earnings': total_earnings})
+        # Since total_price is no longer a field, calculate total earnings dynamically
+        total_earnings = sum([order.calculate_total_price() for order in orders])
+        return Response({'Earnings': total_earnings}, status=status.HTTP_200_OK)
 
 
 class OrderStatusView(APIView):
