@@ -181,16 +181,17 @@ class EarningAPIView(APIView):
 
 
 class OrderStatusView(APIView):
+    permission_classes = [IsAuthenticated]
+
     def get(self, request, order_id):
         try:
-            order = Order.objects.get(pk=order_id)
-            return Response({
-                'order_id': order.pk,
-                'status': order.status,
-                'estimated_delivery_time': order.estimated_delivery_time
-            }, status=status.HTTP_200_OK)
+            order = Order.objects.get(pk=order_id, customer=request.user.customer_profile)
+            serializer = OrderSerializer(order)
+            print(serializer.data)
+            return Response(serializer.data, status=status.HTTP_200_OK)
         except Order.DoesNotExist:
-            return Response({'error': 'Order does not exist'}, status=status.HTTP_404_NOT_FOUND)
+            return Response({'error': 'Order does not exist or you do not have permission to view it.'},
+                            status=status.HTTP_404_NOT_FOUND)
 
 class OrderCancelView(APIView):
     def post(self, request, order_id):
