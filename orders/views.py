@@ -18,6 +18,7 @@ class GetOrderItemsView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
+        # Get the customer associated with the user
         user = request.user
 
         try:
@@ -28,10 +29,12 @@ class GetOrderItemsView(APIView):
 
         order_items = order.items.all()
 
+        # Initialize lists to store pizzas, drinks, and desserts
         pizzas = []
         drinks = []
         desserts = []
 
+        # Loop through all the order items and categorize them based on content_type
         for item in order_items:
             if item.content_type == 'pizza':
                 pizza = get_object_or_404(Pizza, pizza_id=item.object_id)
@@ -43,6 +46,7 @@ class GetOrderItemsView(APIView):
                 dessert = get_object_or_404(Dessert, dessert_id=item.object_id)
                 desserts.append({'dessert': DessertSerializer(dessert).data, 'quantity': item.quantity})
 
+        # Return the items categorized as pizzas, drinks, and desserts
         return Response({
             'pizzas': pizzas,
             'drinks': drinks,
@@ -77,7 +81,6 @@ class AddItemToOrder(APIView):
         order.add_menu_item(item, quantity)
         return Response({'message': f'{item_type.capitalize()} added to order.'}, status=status.HTTP_200_OK)
 
-
 class RemoveItemFromOrder(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -103,7 +106,6 @@ class RemoveItemFromOrder(APIView):
 
         order.remove_menu_item(item, quantity)
         return Response({'message': f'{item_type.capitalize()} removed from order.'}, status=status.HTTP_200_OK)
-
 
 class FinalizeOrderView(APIView):
     permission_classes = [IsAuthenticated]
@@ -136,3 +138,27 @@ class EarningAPIView(APIView):
         # Since total_price is no longer a field, calculate total earnings dynamically
         total_earnings = sum([order.calculate_total_price() for order in orders])
         return Response({'Earnings': total_earnings}, status=status.HTTP_200_OK)
+
+
+class OrderStatusView(APIView):
+    def get(self, request, order_id):
+        try:
+            order = Order.objects.get(pk=order_id)
+            return Response({
+                'order_id': order.pk,
+                'status': order.status,
+                'estimated_delivery_time': order.estimated_delivery_time
+            }, status=status.HTTP_200_OK)
+        except Order.DoesNotExist:
+            return Response({'error': 'Order does not exist'}, status=status.HTTP_404_NOT_FOUND)
+
+class OrderCancelView(APIView):
+    def post(self, request, order_id):
+        try:
+            order = Order.objects.get(pk=order_id)
+            if order.cancel_order_within_time():
+                return Response({'status': 'Order canceled'}, status=status.HTTP_200_OK)
+            else:
+                return Response({'error': 'Cant modify order'}, status=status.HTTP_400_BAD_REQUEST)
+        except Order.DoesNotExist:
+            return Response({'error': 'Order does not exist'}, status=status.HTTP_404_NOT_FOUND)

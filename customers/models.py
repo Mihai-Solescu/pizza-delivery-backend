@@ -18,18 +18,9 @@ class Customer(models.Model):
     discount_applied = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
 
-class CustomerPreferences(models.Model):
+class UserPreferences(models.Model):
     customer_preferences_id = models.AutoField(primary_key=True)
-    customer = models.ForeignKey('customers.Customer', related_name="preferences", on_delete=models.CASCADE)
-
-    # Pizza Base Preference (Encoded as integers)
-    # 0: Thin Crust, 1: Thick Crust, 2: Gluten-Free, 3: Regular
-    pizza_base = models.IntegerField(choices=[
-        (0, 'Thin Crust'),
-        (1, 'Thick Crust'),
-        (2, 'Gluten-Free'),
-        (3, 'Regular')
-    ])
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='customer_profile1')
 
     # Favourite Sauce (Encoded as integers)
     # 0: Tomato, 1: Pesto, 2: White Sauce
@@ -49,13 +40,29 @@ class CustomerPreferences(models.Model):
     ])
 
     # Preferred Toppings (Binary flags for each topping)
-    # 1 if selected, 0 otherwise
-    topping_pepperoni = models.BooleanField(default=False)
-    topping_mushrooms = models.BooleanField(default=False)
-    topping_onions = models.BooleanField(default=False)
-    topping_olives = models.BooleanField(default=False)
-    topping_bell_peppers = models.BooleanField(default=False)
-    topping_chicken = models.BooleanField(default=False)
+    # 1 if liked, 0 neutral, -1 dislike
+    pepperoni = models.IntegerField(default=0)
+    mushrooms = models.IntegerField(default=0)
+    onions = models.IntegerField(default=0)
+    olives = models.IntegerField(default=0)
+    sun_dried_tomatoes = models.IntegerField(default=0)
+    bell_peppers = models.IntegerField(default=0)
+    chicken = models.IntegerField(default=0)
+    bacon = models.IntegerField(default=0)
+    ham = models.IntegerField(default=0)
+    sausage = models.IntegerField(default=0)
+    ground_beef = models.IntegerField(default=0)
+    anchovies = models.IntegerField(default=0)
+    pineapple = models.IntegerField(default=0)
+    basil = models.IntegerField(default=0)
+    broccoli = models.IntegerField(default=0)
+    zucchini = models.IntegerField(default=0)
+    garlic = models.IntegerField(default=0)
+    jalapenos = models.IntegerField(default=0)
+    BBQ_sauce = models.IntegerField(default=0)
+    red_peppers = models.IntegerField(default=0)
+    spinach = models.IntegerField(default=0)
+    feta_cheese = models.IntegerField(default=0)
 
     # Spiciness Level (Encoded as integers)
     # 0: Mild, 1: Medium, 2: Spicy
@@ -69,7 +76,6 @@ class CustomerPreferences(models.Model):
     # 1 if applicable, 0 otherwise
     is_vegetarian = models.BooleanField(default=False)
     is_vegan = models.BooleanField(default=False)
-    is_gluten_free = models.BooleanField(default=False)
 
     # Pizza Size (Encoded as integers)
     # 0: Small, 1: Medium, 2: Large
@@ -80,7 +86,7 @@ class CustomerPreferences(models.Model):
     ])
 
     # Budget Range (Use numeric ranges or midpoints for similarity calculations)
-    budget_range = models.DecimalField(max_digits=5, decimal_places=2)
+    budget_range = models.FloatField(default=7.0)# Ensure unique user-pizza combinations
 
 
 class CustomerData(models.Model):
