@@ -85,20 +85,6 @@ class CustomerDataView(APIView):
         serializer = CustomerDataSerializer(customer_data)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
-    def post(self, request):
-        # Update or create customer data for the authenticated user
-        try:
-            customer_data = CustomerData.objects.get(customer=request.user)
-            serializer = CustomerDataSerializer(customer_data, data=request.data)
-        except CustomerData.DoesNotExist:
-            serializer = CustomerDataSerializer(data=request.data)
-
-        if serializer.is_valid():
-            serializer.save(customer=request.user)
-            return Response(serializer.data, status=status.HTTP_200_OK)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-
 class CustomerPreferencesView(APIView):
     def get(self, request):
         # Get preferences of the authenticated user
