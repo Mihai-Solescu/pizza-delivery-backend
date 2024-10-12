@@ -12,7 +12,7 @@ from menu.models import Ingredient, Dessert, Drink, Pizza
 
 class Order(models.Model):
     customer = models.ForeignKey(Customer, on_delete=models.CASCADE)
-    order_date = models.DateField()
+    order_date = models.DateField(null=True, blank=True)
     STATUS_CHOICES = [
         ('open', 'Open'),
         ('confirmed', 'Confirmed'),
@@ -22,7 +22,6 @@ class Order(models.Model):
     ]
     status = models.CharField(max_length=50, choices=STATUS_CHOICES, default="open")
     delivery = models.ForeignKey('delivery.Delivery', blank=True, null=True, on_delete=models.CASCADE)
-    status = models.CharField(max_length=50, default="pending")
     total_price = models.DecimalField(decimal_places=3, max_digits=8, default=Decimal('0.00'))
     discount_applied = models.BooleanField(default=False)
     freebie_applied = models.BooleanField(default=False)
