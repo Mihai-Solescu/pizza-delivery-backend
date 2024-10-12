@@ -126,6 +126,8 @@ class FinalizeOrderView(APIView):
         if not order:
             return Response({'error': 'No open order found.'}, status=status.HTTP_404_NOT_FOUND)
 
+        print (request.data)
+
         # Process the order (calculate total price, apply discounts, freebies, etc.)
         order.process_order()
         return Response({
@@ -146,6 +148,25 @@ class OrderTotalPriceView(APIView):
 
         total_price = order.calculate_total_price()
         return Response({'total_price': total_price}, status=status.HTTP_200_OK)
+
+class RedeemDiscountView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        discount_code = request.data.get('discount_code')
+        user = request.user
+        order = Order.objects.filter(customer=user.customer_profile, status='open').first()
+
+        if not order:
+            return Response({'error': 'No open order found.'}, status=status.HTTP_404_NOT_FOUND)
+
+        print(request.data)
+
+        order.apply_discount_code(discount_code)
+        if order.redeemable_discount_applied:
+            return Response({'total_price': order.calculate_total_price()}, status=status.HTTP_200_OK)
+        else:
+            return Response({'error': 'Invalid discount code.'}, status=status.HTTP_400_BAD_REQUEST)
 
 class EarningAPIView(APIView):
     permission_classes = [IsAdminUser]

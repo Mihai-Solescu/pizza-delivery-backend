@@ -7,16 +7,18 @@ from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, User
 class Customer(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='customer_profile')
     customer_id = models.AutoField(primary_key=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
     gender = models.CharField(max_length=1, null=True, blank=True)
     birthdate = models.DateField(null=True, blank=True)
     address_line = models.CharField(max_length=30, null=True, blank=True)
     postal_code = models.CharField(max_length=20, default=0)
     city = models.CharField(max_length=30, null=True, blank=True)
+
     total_pizzas_ordered = models.IntegerField(default=0)
     is_birthday_freebie = models.BooleanField(default=False)
     discount_code = models.CharField(max_length=32, unique=True)
     discount_applied = models.BooleanField(default=False)
-    created_at = models.DateTimeField(auto_now_add=True)
 
 class CustomerPreferences(models.Model):
     customer_preferences_id = models.AutoField(primary_key=True)

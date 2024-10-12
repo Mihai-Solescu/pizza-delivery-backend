@@ -23,48 +23,28 @@ class Order(models.Model):
     ]
     status = models.CharField(max_length=50, choices=STATUS_CHOICES, default="open")
     delivery = models.ForeignKey('delivery.Delivery', blank=True, null=True, on_delete=models.CASCADE)
-    total_price = models.DecimalField(decimal_places=3, max_digits=8, default=Decimal('0.00'))
-    discount_applied = models.BooleanField(default=False)
+
+    redeemable_discount_applied = models.BooleanField(default=False)
+    loyalty_discount_applied = models.BooleanField(default=False)
     freebie_applied = models.BooleanField(default=False)
     estimated_delivery_time = models.IntegerField(blank=True, null=True)
 
     def apply_loyalty_discount(self):
         if self.customer.total_pizzas_ordered >= 10:
-            self.total_price *= Decimal('0.9')
-            self.customer.total_pizzas_ordered -= 10
-            self.customer.discount_applied = True
+            self.customer.total_pizzas_ordered = 0
             self.customer.save()
-            self.discount_applied = True
 
-    def apply_discount_code(self):
-        if self.customer.discount_code and not self.customer.discount_code.is_redeemed:
-            self.total_price *= Decimal('0.9')
-            self.customer.discount_code.is_redeemed = True
+    def apply_discount_code(self, discount_code):
+        if str(self.customer.discount_code) == discount_code and not self.customer.discount_applied:
             self.customer.discount_applied = True
-            self.discount_applied = True
+            self.redeemable_discount_applied = True
             self.customer.save()
+            print('Discount applied')
 
     def apply_birthday_freebies(self):
         today = timezone.now().date()
-        if (self.customer.birthdate.month == today.month and self.customer.birthdate.day == today.day
-                and not self.customer.is_birthday_freebie):
-            pizza_free = False
-            drink_free = False
-            for item in self.items.all():
-                if item.content_type == 'pizza' and not pizza_free:
-                    pizza_free = True
-                elif item.content_type == 'drink' and not drink_free:
-                    drink_free = True
-                if pizza_free and drink_free:
-                    self.customer.is_birthday_freebie = True
-                    self.customer.save()
-                    break
+        if (self.customer.birthdate.month == today.month and self.customer.birthdate.day == today.day and not self.customer.is_birthday_freebie):
             self.freebie_applied = True
-
-    def calculate_estimated_delivery_time(self):
-        pizza_items = self.order_menu_items.filter(menu_item__type='pizza')
-        pizza_quantity = sum([item.quantity for item in pizza_items])
-        self.estimated_delivery_time = pizza_quantity * 2 + 10
 
     def calculate_item_count(self):
         return self.items.count()
@@ -95,6 +75,10 @@ class Order(models.Model):
         most_expensive_pizza = max(pizzas, key=lambda item: item.get_price())
         if self.freebie_applied:
             total_price -= most_expensive_pizza.get_price()
+        if self.loyalty_discount_applied:
+            total_price *= Decimal('0.9')
+        if self.redeemable_discount_applied:
+            total_price *= Decimal('0.9')
 
         return round(total_price, 2)
 
@@ -138,15 +122,21 @@ class Order(models.Model):
 
     def process_order(self):
         if self.status == 'open':
+            # discounts
             self.apply_loyalty_discount()
-            self.apply_discount_code()
             self.apply_birthday_freebies()
-            self.calculate_estimated_delivery_time()
             self.update_customer_pizza_count()
+            # delivery
+            self.calculate_estimated_delivery_time()
             self.status = 'confirmed'
             self.save()
         else:
             raise ValueError('Order is not open')
+
+    def calculate_estimated_delivery_time(self):
+        pizza_items = self.order_menu_items.filter(menu_item__type='pizza')
+        pizza_quantity = sum([item.quantity for item in pizza_items])
+        self.estimated_delivery_time = pizza_quantity * 2 + 10
 
     def cancel_order_within_time(self):
         if self.order_date < datetime.now() + timedelta(minutes=5):
