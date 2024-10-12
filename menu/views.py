@@ -54,7 +54,10 @@ class PizzaListViewSet(APIView):
             pizzas = self._pref_filter(budget_range, is_vegetarian, is_vegan, pizzas)
 
             if smart:
-                print("needs implementation")
+                pizzas = self._pref_filter(budget_range, is_vegetarian, is_vegan, pizzas)
+                pizzas = self._sort_by_similarity(pizzas, preferences_vector, request.user)
+                best_pizza = pizzas[0]
+                pizzas = [best_pizza]  # Keep only the best pizza
             else:
                 # Enhance quick order: return only one pizza sorted by popularity
                 pizzas = self._get_most_popular_pizza(pizzas)
@@ -279,7 +282,7 @@ class PizzaUserRatingView(APIView):
             user=user,
             pizza=pizza,
             defaults={
-                'rating': 2,
+                'rating': 3,
             }
         )
 
