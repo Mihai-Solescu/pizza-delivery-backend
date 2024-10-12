@@ -147,7 +147,7 @@ class PizzaSerializer(serializers.ModelSerializer):
             }
         )
 
-        smart = self.context['request'].query_params.get('smart').lower() == 'true'
+        smart = self.context['request'].query_params.get('smart', 'false').lower() == 'true'
 
         if smart:
             # Automatically set rate_tag to True if the user's rating is 4 or higher
