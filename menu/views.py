@@ -232,7 +232,7 @@ class PizzaUserTagsView(APIView):
 
     def post(self, request, pizza_id):
         # Get the pizza object
-        pizza = get_object_or_404(Pizza, pizza_id=pizza_id)
+        pizza = get_object_or_404(Pizza, id=pizza_id)
         user = request.user  # Get the currently authenticated user
 
         # Check if UserPizzaTag exists for this user and pizza
@@ -259,7 +259,7 @@ class PizzaUserTagsView(APIView):
 
         # Prepare the response data
         response_data = {
-            'pizza_id': pizza.pizza_id,
+            'pizza_id': pizza.id,
             'rate_tag': user_pizza_tag.rate_tag,
             'order_tag': user_pizza_tag.order_tag,
             'try_tag': user_pizza_tag.try_tag,
@@ -271,7 +271,7 @@ class PizzaUserTagsView(APIView):
 class PizzaUserRatingView(APIView):
     def post(self, request, pizza_id):
         # Get the pizza object
-        pizza = get_object_or_404(Pizza, pizza_id=pizza_id)
+        pizza = get_object_or_404(Pizza, id=pizza_id)
         user = request.user  # Get the currently authenticated user
 
         # Check if UserPizzaTag exists for this user and pizza
@@ -292,7 +292,7 @@ class PizzaUserRatingView(APIView):
 
         # Prepare the response data
         response_data = {
-            'pizza_id': pizza.pizza_id,
+            'pizza_id': pizza.id,
             'rating': user_pizza_rating.rating,
         }
 
