@@ -65,7 +65,7 @@ class PizzaListViewSet(APIView):
 
         if most_popular_pizza_id:
             # Return the most popular pizza based on the object_id as a list
-            most_popular_pizza = pizzas.filter(id=most_popular_pizza_id).first()
+            most_popular_pizza = pizzas.filter(pizza_id=most_popular_pizza_id).first()
             if most_popular_pizza:
                 return [most_popular_pizza]
 
