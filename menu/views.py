@@ -107,8 +107,8 @@ class PizzaListViewSet(APIView):
         # Budget filter
         if budget_range:
             budget_max = Decimal(budget_range)
-            pizzas = pizzas.filter(id__in=[
-                pizza.id for pizza in pizzas if self._calculate_price(pizza) <= budget_max
+            pizzas = pizzas.filter(pizza_id__in=[
+                pizza.pizza_id for pizza in pizzas if self._calculate_price(pizza) <= budget_max
             ])
 
         # Vegetarian filter
