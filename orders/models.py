@@ -8,6 +8,7 @@ from django.contrib.contenttypes.fields import GenericForeignKey
 from customers.models import Customer
 from delivery.models import Delivery
 from menu.models import Ingredient, Dessert, Drink, Pizza
+from django.contrib.contenttypes.models import ContentType
 
 
 class Order(models.Model):
@@ -65,6 +66,9 @@ class Order(models.Model):
         pizza_quantity = sum([item.quantity for item in pizza_items])
         self.estimated_delivery_time = pizza_quantity * 2 + 10
 
+    def calculate_item_count(self):
+        return self.items.count()
+
     def calculate_total_price(self):
         """
         Calculate the total price, applying any discounts and freebies.
@@ -89,22 +93,13 @@ class Order(models.Model):
         return round(total_price, 2)
 
     def add_menu_item(self, item, quantity):
-        # Determine item type and id
-        if isinstance(item, Pizza):
-            item_type = 'pizza'
-            object_id = item.pizza_id
-        elif isinstance(item, Drink):
-            item_type = 'drink'
-            object_id = item.drink_id
-        elif isinstance(item, Dessert):
-            item_type = 'dessert'
-            object_id = item.dessert_id
-        else:
-            raise ValueError('Invalid item type')
+        # Determine the content type and object ID for the given item
+        content_type = ContentType.objects.get_for_model(item.__class__)
+        object_id = item.id
 
         order_item, created = OrderItem.objects.get_or_create(
             order=self,
-            content_type=item_type,
+            content_type=content_type,
             object_id=object_id,
             defaults={'quantity': quantity}
         )

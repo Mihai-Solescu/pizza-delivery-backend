@@ -7,8 +7,8 @@ from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 import json
 
-from customers.serializers import CustomerRegisterSerializer, UserPreferencesSerializer
-from customers.models import UserPreferences, Customer
+from customers.serializers import CustomerRegisterSerializer, CustomerPreferencesSerializer, CustomerDataSerializer
+from customers.models import CustomerPreferences, CustomerData, Customer
 
 
 class LoginView(APIView):
@@ -47,14 +47,50 @@ class CustomerRegisterView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-class UserPreferencesView(APIView):
-    permission_classes = [permissions.IsAuthenticated]
+class CustomerDataView(APIView):
+    def post(self, request):
+        try:
+            # Get the existing data for the authenticated user
+            customer_data = CustomerData.objects.get(customer=request.user)
+        except CustomerData.DoesNotExist:
+            # If no data exists for this user, create a new record
+            customer_data = CustomerData(customer=request.user)
 
+        # Handle pizza order updates
+        pizzas_ordered = request.data.get('pizzas_ordered', [])
+        for pizza in pizzas_ordered:
+            if pizza in customer_data.times_pizza_ordered:
+                customer_data.times_pizza_ordered[pizza] += 1
+            else:
+                customer_data.times_pizza_ordered[pizza] = 1
+
+        # Handle pizza rating updates
+        pizzas_ratings = request.data.get('pizzas_ratings', {})
+        for pizza, new_rating in pizzas_ratings.items():
+            # If the pizza already has a rating, update the average rating
+            if pizza in customer_data.avg_pizza_rating:
+                current_avg_rating = customer_data.avg_pizza_rating[pizza]
+                total_ratings = customer_data.times_pizza_ordered.get(pizza,
+                                                                      1)  # Ensure there's at least one order for this pizza
+                updated_avg_rating = (current_avg_rating * (total_ratings - 1) + new_rating) / total_ratings
+                customer_data.avg_pizza_rating[pizza] = updated_avg_rating
+            else:
+                # First rating for the pizza
+                customer_data.avg_pizza_rating[pizza] = new_rating
+
+        # Save the updated data
+        customer_data.save()
+
+        # Serialize the data and return the response
+        serializer = CustomerDataSerializer(customer_data)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+class CustomerPreferencesView(APIView):
     def get(self, request):
         # Get preferences of the authenticated user
         try:
-            preferences = UserPreferences.objects.get(user=request.user)
-            serializer = UserPreferencesSerializer(preferences)
+            preferences = CustomerPreferences.objects.get(user=request.user)
+            serializer = CustomerPreferencesSerializer(preferences)
 
             # Prepare the response
             response_data = {
@@ -85,7 +121,7 @@ class UserPreferencesView(APIView):
 
             return Response(response_data, status=status.HTTP_200_OK)
 
-        except UserPreferences.DoesNotExist:
+        except CustomerPreferences.DoesNotExist:
             return Response(
                 {"detail": "Preferences not found for this user."},
                 status=status.HTTP_404_NOT_FOUND
@@ -108,7 +144,7 @@ class UserPreferencesView(APIView):
             budget_range = data.get('budget_range', 7.00)
 
             # Update or create user preferences
-            preferences, created = UserPreferences.objects.update_or_create(
+            preferences, created = CustomerPreferences.objects.update_or_create(
                 user=request.user,
                 defaults={
                     'favourite_sauce': favourite_sauce,

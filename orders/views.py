@@ -28,7 +28,6 @@ class GetOrderItemsView(APIView):
             return Response({'error': 'Multiple open orders found.'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
         order_items = order.items.all()
-        order_items = order.items.all()
 
         # Initialize lists to store pizzas, drinks, and desserts
         pizzas = []
@@ -37,13 +36,13 @@ class GetOrderItemsView(APIView):
 
         for item in order_items:
             if item.content_type == 'pizza':
-                pizza = get_object_or_404(Pizza, pizza_id=item.object_id)
+                pizza = get_object_or_404(Pizza, id=item.object_id)
                 pizzas.append({'pizza': PizzaSerializer(pizza).data, 'quantity': item.quantity})
             elif item.content_type == 'drink':
-                drink = get_object_or_404(Drink, drink_id=item.object_id)
+                drink = get_object_or_404(Drink, id=item.object_id)
                 drinks.append({'drink': DrinkSerializer(drink).data, 'quantity': item.quantity})
             elif item.content_type == 'dessert':
-                dessert = get_object_or_404(Dessert, dessert_id=item.object_id)
+                dessert = get_object_or_404(Dessert, id=item.object_id)
                 desserts.append({'dessert': DessertSerializer(dessert).data, 'quantity': item.quantity})
 
         return Response({
@@ -52,6 +51,18 @@ class GetOrderItemsView(APIView):
             'desserts': desserts,
         }, status=status.HTTP_200_OK)
 
+class GetOrderItemCountView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        user = request.user
+        order, created = Order.objects.get_or_create(customer=user.customer_profile, status='open')
+
+        if not order:
+            return Response({'error': 'No open order found.'}, status=status.HTTP_404_NOT_FOUND)
+
+        item_count = OrderItem.objects.filter(order=order).aggregate(Sum('quantity'))['quantity__sum']
+        return Response({'item_count': item_count}, status=status.HTTP_200_OK)
 
 class AddItemToOrder(APIView):
     permission_classes = [IsAuthenticated]
@@ -60,20 +71,22 @@ class AddItemToOrder(APIView):
         user = request.user
         order, created = Order.objects.get_or_create(
             customer=user.customer_profile,
-            status='open',
-            defaults={'order_date': date.today()}
+            status='open'
         )
+
+        print(request.data)
 
         item_type = request.data.get('item_type')
         item_id = request.data.get('item_id')
         quantity = int(request.data.get('quantity', 1))
 
         if item_type == 'pizza':
-            item = get_object_or_404(Pizza, pizza_id=item_id)
+            item = get_object_or_404(Pizza, id=item_id)
+            print (item)
         elif item_type == 'drink':
-            item = get_object_or_404(Drink, drink_id=item_id)
+            item = get_object_or_404(Drink, id=item_id)
         elif item_type == 'dessert':
-            item = get_object_or_404(Dessert, dessert_id=item_id)
+            item = get_object_or_404(Dessert, id=item_id)
         else:
             return Response({'error': 'Invalid item type.'}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -95,11 +108,11 @@ class RemoveItemFromOrder(APIView):
         quantity = int(request.data.get('quantity', 1))
 
         if item_type == 'pizza':
-            item = get_object_or_404(Pizza, pizza_id=item_id)
+            item = get_object_or_404(Pizza, id=item_id)
         elif item_type == 'drink':
-            item = get_object_or_404(Drink, drink_id=item_id)
+            item = get_object_or_404(Drink, id=item_id)
         elif item_type == 'dessert':
-            item = get_object_or_404(Dessert, dessert_id=item_id)
+            item = get_object_or_404(Dessert, id=item_id)
         else:
             return Response({'error': 'Invalid item type.'}, status=status.HTTP_400_BAD_REQUEST)
 

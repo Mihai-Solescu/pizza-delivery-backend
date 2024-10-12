@@ -2,7 +2,7 @@ from django.contrib import admin
 
 # Register your models here.
 
-from .models import Customer, UserPreferences
+from .models import Customer, CustomerPreferences
 
 admin.site.register(Customer)
-admin.site.register(UserPreferences)
+admin.site.register(CustomerPreferences)
