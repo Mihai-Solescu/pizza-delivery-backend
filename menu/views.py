@@ -107,8 +107,8 @@ class PizzaListViewSet(APIView):
         # Budget filter
         if budget_range:
             budget_max = Decimal(budget_range)
-            pizzas = pizzas.filter(id__in=[
-                pizza.id for pizza in pizzas if self._calculate_price(pizza) <= budget_max
+            pizzas = pizzas.filter(pizza_id__in=[
+                pizza.pizza_id for pizza in pizzas if self._calculate_price(pizza) <= budget_max
             ])
 
         # Vegetarian filter
@@ -189,14 +189,26 @@ class PizzaUserTagsView(APIView):
                 'rate_tag': False,
                 'order_tag': False,
                 'try_tag': False,
+                'vegetarian_tag': False,
+                'vegan_tag': False,
             }
         )
 
         # Check the ingredients to determine vegetarian and vegan tags
         is_vegan = all(
-            ingredient.is_vegan for ingredient in pizza.pizzaingredientlink_set.values_list('ingredient', flat=True))
-        is_vegetarian = all(ingredient.is_vegetarian for ingredient in
-                            pizza.pizzaingredientlink_set.values_list('ingredient', flat=True))
+            ingredient.is_vegan for ingredient in pizza.pizzaingredientlink_set.values_list('ingredient', flat=True)
+        )
+        is_vegetarian = all(
+            ingredient.is_vegetarian for ingredient in
+            pizza.pizzaingredientlink_set.values_list('ingredient', flat=True)
+        )
+
+        # Get the current user's rating for this pizza
+        user_rating = UserPizzaRating.objects.filter(user=user, pizza=pizza).first()
+
+        # Automatically set rate_tag to True if the user's rating is 4 or higher (but only if the user hasn't manually set the tag)
+        if user_rating and user_rating.rating >= 4 and not user_pizza_tag.rate_tag_manual:
+            user_pizza_tag.rate_tag = True
 
         # Update the vegetarian and vegan tags
         user_pizza_tag.vegetarian_tag = is_vegetarian
@@ -213,7 +225,9 @@ class PizzaUserTagsView(APIView):
             'rate_tag': user_pizza_tag.rate_tag,
             'order_tag': user_pizza_tag.order_tag,
             'try_tag': user_pizza_tag.try_tag,
+            'user_rating': user_rating.rating if user_rating else None  # Include user's rating in response
         }
+
         return Response(response_data, status=status.HTTP_200_OK)
 
     def post(self, request, pizza_id):

@@ -46,6 +46,8 @@ class PizzaSerializer(serializers.ModelSerializer):
 
     def get_tags(self, obj):
         user = self.context['request'].user  # Get the authenticated user
+
+        # Get or create the UserPizzaTag for this user and pizza
         user_pizza_tag, created = UserPizzaTag.objects.get_or_create(
             user=user,
             pizza=obj,
@@ -58,12 +60,20 @@ class PizzaSerializer(serializers.ModelSerializer):
             }
         )
 
+        # Automatically set rate_tag to True if the user's rating is 4 or higher
+        user_rating = UserPizzaRating.objects.filter(user=user, pizza=obj).first()
+        if user_rating and user_rating.rating >= 4:
+            user_pizza_tag.rate_tag = True
+
+        # Save the updated user_pizza_tag
+        user_pizza_tag.save()
+
         return {
             'rate_tag': user_pizza_tag.rate_tag,
             'order_tag': user_pizza_tag.order_tag,
             'try_tag': user_pizza_tag.try_tag,
-            'vegetarian_tag': user_pizza_tag.vegetarian_tag,  # Will be updated if pizza is vegetarian
-            'vegan_tag': user_pizza_tag.vegan_tag,  # Will be updated if pizza is vegan
+            'vegetarian_tag': user_pizza_tag.vegetarian_tag,
+            'vegan_tag': user_pizza_tag.vegan_tag,
         }
 
     def get_rating(self, obj):
