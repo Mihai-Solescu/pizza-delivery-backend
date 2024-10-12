@@ -1,8 +1,13 @@
 import numpy as np
+from django.contrib.auth.models import User
+
+from customers.models import CustomerPreferences
 from .models import Pizza, Ingredient
 
+weight = 0.25 # Decay factor for exponential decay
 
-def get_user_preference_vector(customer):
+def get_user_preference_vector(user):
+    customer = user.customer_profile
     ingredient_preferences = [
         customer.pepperoni,
         customer.mushrooms,
@@ -47,7 +52,6 @@ def cosine_similarity(vec1, vec2):
     norm2 = np.linalg.norm(vec2)
     return dot_product / (norm1 * norm2)
 
-
 def recommend_pizzas(user, top_n=5):
     user_preferences = get_user_preference_vector(user)
 
@@ -58,29 +62,22 @@ def recommend_pizzas(user, top_n=5):
         pizza_similarities.append((pizza, similarity))
 
     sorted_pizzas = sorted(pizza_similarities, key=lambda x: x[1], reverse=True)
-
     return [pizza for pizza, similarity in sorted_pizzas[:top_n]]
 
 
-def update_user_profile_with_review(user, pizza, review_score):
-    profile = UserProfile.objects.get(user=user)
+def update_preferences_review_decay(user, pizza, review_score):
+    preferences = CustomerPreferences.objects.get(user=user)
+    old_preferences = np.array(preferences.preferences)
     pizza_vector = get_pizza_vector(pizza)
+    a = (review_score - 3) / 2 # normalize [1, 5] to [-1, 1]
+    new_preferences = old_preferences + a * pizza_vector
+    preferences.preferences = weight * new_preferences + (1 - weight) * old_preferences # exponential decay
+    preferences.save()
 
-    # Normalize review score to [-1, 1]
-    a = (review_score - 2.5) / 2.5
-
-    # Update preferences using a weighting scheme
-    updated_preferences = profile.preferences + a * pizza_vector
-    profile.preferences = updated_preferences
-    profile.save()
-
-
-def update_preferences_with_decay(user, pizza, w=0.5):
-    profile = UserProfile.objects.get(user=user)
-    old_preferences = np.array(profile.preferences)
+def update_preferences_unrated_decay (user, pizza, review_score):
+    preferences = CustomerPreferences.objects.get(user=user)
+    old_preferences = np.array(preferences.preferences)
     pizza_vector = get_pizza_vector(pizza)
-
-    # Apply exponential decay
-    new_preferences = w * pizza_vector + (1 - w) * old_preferences
-    profile.preferences = new_preferences
-    profile.save()
+    new_preferences = old_preferences + pizza_vector
+    preferences.preferences = weight * new_preferences + (1 - weight) * old_preferences # exponential decay
+    preferences.save()

@@ -85,7 +85,7 @@ class Command(BaseCommand):
         with open(file_path, 'r') as f:
             ingredient_filters = json.load(f)
             for filter_data in ingredient_filters:
-                ingredient = Ingredient.objects.get(name=filter_data['ingredient_name'])
+                ingredient = Ingredient.objects.get(id=filter_data['ingredient_id'])
                 filters, created = IngredientFilters.objects.get_or_create(
                     ingredient=ingredient,
                     is_vegan=filter_data['is_vegan'],
