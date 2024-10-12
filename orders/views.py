@@ -29,21 +29,26 @@ class GetOrderItemsView(APIView):
 
         order_items = order.items.all()
 
+        print (order_items)
+
         # Initialize lists to store pizzas, drinks, and desserts
         pizzas = []
         drinks = []
         desserts = []
 
         for item in order_items:
-            if item.content_type == 'pizza':
+            print (item.content_type)
+            if str(item.content_type) == 'Menu | pizza':
                 pizza = get_object_or_404(Pizza, id=item.object_id)
                 pizzas.append({'pizza': PizzaSerializer(pizza).data, 'quantity': item.quantity})
-            elif item.content_type == 'drink':
+            elif item.content_type == 'Menu | drink':
                 drink = get_object_or_404(Drink, id=item.object_id)
                 drinks.append({'drink': DrinkSerializer(drink).data, 'quantity': item.quantity})
-            elif item.content_type == 'dessert':
+            elif item.content_type == 'Menu | dessert':
                 dessert = get_object_or_404(Dessert, id=item.object_id)
                 desserts.append({'dessert': DessertSerializer(dessert).data, 'quantity': item.quantity})
+
+        print (pizzas)
 
         return Response({
             'pizzas': pizzas,
