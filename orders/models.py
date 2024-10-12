@@ -173,14 +173,8 @@ class Order(models.Model):
 
 
 class OrderItem(models.Model):
-    ITEM_TYPES = [
-        ('pizza', 'Pizza'),
-        ('drink', 'Drink'),
-        ('dessert', 'Dessert'),
-    ]
-
     order = models.ForeignKey('orders.Order', on_delete=models.CASCADE, related_name='items')
-    content_type = models.CharField(max_length=50, choices=ITEM_TYPES)
-    object_id = models.PositiveIntegerField()
+    content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)  # ForeignKey to ContentType
+    object_id = models.PositiveIntegerField()  # ID of the linked object
     content_object = GenericForeignKey('content_type', 'object_id')  # Link to any model (e.g., Pizza, Drink, Dessert)
     quantity = models.PositiveIntegerField(default=1)

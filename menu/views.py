@@ -88,8 +88,8 @@ class PizzaListViewSet(APIView):
         # Budget filter
         if budget_range:
             budget_max = Decimal(budget_range)
-            pizzas = pizzas.filter(id__in=[
-                pizza.id for pizza in pizzas if self._calculate_price(pizza) <= budget_max
+            pizzas = pizzas.filter(pizza_id__in=[
+                pizza.pizza_id for pizza in pizzas if self._calculate_price(pizza) <= budget_max
             ])
 
         # Vegetarian filter
@@ -183,7 +183,7 @@ class PizzaUserTagsView(APIView):
 
         # Prepare the response data
         response_data = {
-            'pizza_id': pizza.id,
+            'pizza_id': pizza.pizza_id,
             'rate_tag': user_pizza_tag.rate_tag,
             'order_tag': user_pizza_tag.order_tag,
             'try_tag': user_pizza_tag.try_tag,
@@ -216,7 +216,7 @@ class PizzaUserRatingView(APIView):
 
         # Prepare the response data
         response_data = {
-            'pizza_id': pizza.id,
+            'pizza_id': pizza.pizza_id,
             'rating': user_pizza_rating.rating,
         }
 
