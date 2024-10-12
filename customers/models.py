@@ -17,7 +17,7 @@ class Customer(models.Model):
 
     total_pizzas_ordered = models.IntegerField(default=0)
     is_birthday_freebie = models.BooleanField(default=False)
-    discount_code = models.CharField(max_length=32)
+    discount_code = models.CharField(max_length=32, null=True, blank=True)
     discount_applied = models.BooleanField(default=False)
 
 class CustomerPreferences(models.Model):
