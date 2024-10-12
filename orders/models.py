@@ -42,6 +42,8 @@ class Order(models.Model):
             print('Discount applied')
 
     def apply_birthday_freebies(self):
+        if (self.customer.birthdate is None):
+            return
         today = timezone.now().date()
         if (self.customer.birthdate.month == today.month and self.customer.birthdate.day == today.day and not self.customer.is_birthday_freebie):
             self.freebie_applied = True
@@ -121,6 +123,45 @@ class Order(models.Model):
         self.customer.total_pizzas_ordered += pizza_quantity
         self.customer.save()
         print(self.customer.total_pizzas_ordered)
+
+    def create_or_update_delivery(self):
+        delivery_address = self.customer.address_line
+        postal_code = self.customer.postal_code
+
+        three_minutes_ago = timezone.now() - timedelta(minutes=3)
+        recent_deliveries = Delivery.objects.filter(
+            postal_code=postal_code,
+            delivery_status='pending',
+            pizza_quantity__lt=3,
+            delivery_person__isnull=False,
+            created_at__gte=three_minutes_ago
+        )
+
+        for delivery in recent_deliveries:
+            if delivery.pizza_quantity + self.get_pizza_quantity() <= 3:
+                self.delivery = delivery
+                delivery.pizza_quantity += self.get_pizza_quantity()
+                delivery.save()
+                self.save()
+                return
+
+        new_delivery = Delivery.objects.create(
+            delivery_status='pending',
+            pizza_quantity=self.get_pizza_quantity(),
+            delivery_address=delivery_address,
+            postal_code=postal_code
+        )
+
+        assigned = new_delivery.assign_delivery_person()
+        if not assigned:
+            new_delivery.delivery_status = 'no_courier'
+            new_delivery.save()
+        self.delivery = new_delivery
+        self.save()
+
+    def get_pizza_quantity(self):
+        pizzas = self.items.filter(content_type='pizza')
+        return sum(item.quantity for item in pizzas)
 
     def process_order(self):
         if self.status == 'open':
