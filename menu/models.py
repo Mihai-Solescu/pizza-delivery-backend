@@ -1,12 +1,19 @@
+from decimal import Decimal
 from django.db import models
 from customers.models import Customer
 from django.contrib.auth.models import User
-# Create your models here.
 
 class Pizza(models.Model):
     id = models.AutoField(primary_key=True)
     description = models.CharField(max_length=255, default="")
     name = models.CharField(max_length=30)
+
+    def get_price(self):
+        ingredients = PizzaIngredientLink.objects.filter(pizza=self).select_related('ingredient')
+        labor_price = Decimal(0.5)  # Adjust as needed
+        total_ingredient_cost = sum(i.ingredient.cost for i in ingredients)
+        total_price = total_ingredient_cost + labor_price
+        return total_price
 
 class UserPizzaTag(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)

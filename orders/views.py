@@ -13,8 +13,6 @@ import calendar
 from menu.models import Pizza, Drink, Dessert
 from menu.serializers import PizzaSerializer, DrinkSerializer, DessertSerializer
 from .models import Order, OrderItem
-from .serializers import OrderSerializer
-
 
 class GetOrderItemsView(APIView):
     permission_classes = [IsAuthenticated]
@@ -29,31 +27,25 @@ class GetOrderItemsView(APIView):
 
         order_items = order.items.all()
 
-        print (order_items)
-
-        # Initialize lists to store pizzas, drinks, and desserts
         pizzas = []
         drinks = []
         desserts = []
 
         for item in order_items:
-            print (item.content_type)
             if str(item.content_type) == 'Menu | pizza':
                 pizza = get_object_or_404(Pizza, id=item.object_id)
                 pizzas.append({'pizza': PizzaSerializer(pizza, many=False, context={'request' : request}).data, 'quantity': item.quantity})
-            elif item.content_type == 'Menu | drink':
+            elif str(item.content_type) == 'Menu | drink':
                 drink = get_object_or_404(Drink, id=item.object_id)
                 drinks.append({'drink': DrinkSerializer(drink, many=False, context={'request' : request}).data, 'quantity': item.quantity})
-            elif item.content_type == 'Menu | dessert':
+            elif str(item.content_type) == 'Menu | dessert':
                 dessert = get_object_or_404(Dessert, id=item.object_id)
                 desserts.append({'dessert': DessertSerializer(dessert, many=False, context={'request' : request}).data, 'quantity': item.quantity})
 
-        print (pizzas)
-
         return Response({
-            'pizzas': pizzas,
-            'drinks': drinks,
-            'desserts': desserts,
+            'pizza': pizzas,
+            'drink': drinks,
+            'dessert': desserts,
         }, status=status.HTTP_200_OK)
 
 class GetOrderItemCountView(APIView):
@@ -142,6 +134,18 @@ class FinalizeOrderView(APIView):
             'estimated_delivery_time': order.estimated_delivery_time
         }, status=status.HTTP_200_OK)
 
+class OrderTotalPriceView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        user = request.user
+        order = Order.objects.filter(customer=user.customer_profile, status='open').first()
+
+        if not order:
+            return Response({'error': 'No open order found.'}, status=status.HTTP_404_NOT_FOUND)
+
+        total_price = order.calculate_total_price()
+        return Response({'total_price': total_price}, status=status.HTTP_200_OK)
 
 class EarningAPIView(APIView):
     permission_classes = [IsAdminUser]

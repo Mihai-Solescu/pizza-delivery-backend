@@ -14,7 +14,7 @@ class Customer(models.Model):
     city = models.CharField(max_length=30, null=True, blank=True)
     total_pizzas_ordered = models.IntegerField(default=0)
     is_birthday_freebie = models.BooleanField(default=False)
-    discount_code = models.CharField(max_length=32, unique=True)
+    discount_code = models.CharField(max_length=32)
     discount_applied = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
 
