@@ -1,12 +1,10 @@
 from datetime import datetime, timedelta
-
 from django.db import models
 from decimal import Decimal
 from django.utils import timezone
 from customers.models import Customer
 from delivery.models import Delivery
 from menu.models import Ingredient, Dessert, Drink, Pizza
-
 
 class Order(models.Model):
     customer = models.ForeignKey(Customer, on_delete=models.CASCADE)
@@ -20,51 +18,74 @@ class Order(models.Model):
     ]
     status = models.CharField(max_length=50, choices=STATUS_CHOICES, default="open")
     delivery = models.ForeignKey('delivery.Delivery', blank=True, null=True, on_delete=models.CASCADE)
-    status = models.CharField(max_length=50, default="pending")
-    total_price = models.DecimalField(decimal_places=3, max_digits=8, default=Decimal('0.00'))
     discount_applied = models.BooleanField(default=False)
+    freebie_applied = models.BooleanField(default=False)
     estimated_delivery_time = models.IntegerField(blank=True, null=True)
 
     def apply_loyalty_discount(self):
+        """Applies a 10% loyalty discount if the customer has ordered more than 10 pizzas."""
         if self.customer.total_pizzas_ordered >= 10:
-            self.total_price *= Decimal('0.9')
             self.customer.total_pizzas_ordered -= 10
+            self.customer.discount_applied = True
             self.customer.save()
             self.discount_applied = True
 
     def apply_discount_code(self):
+        """Applies a discount code if available and not redeemed."""
         if self.customer.discount_code and not self.customer.discount_code.is_redeemed:
-            self.total_price *= Decimal('0.9')
             self.customer.discount_code.is_redeemed = True
             self.customer.discount_applied = True
             self.discount_applied = True
+            self.customer.save()
 
     def apply_birthday_freebies(self):
+        """Applies a free pizza and drink if it's the customer's birthday and they haven't received a freebie yet."""
         today = timezone.now().date()
         if self.customer.birthdate.month == today.month and self.customer.birthdate.day == today.day and not self.customer.is_birthday_freebie:
             pizza_free = False
             drink_free = False
-            for item in self.order_menu_items.all():
-                if item.menu_item.type == 'pizza' and not pizza_free:
-                    self.total_price -= item.menu_item.price
+            for item in self.items.all():
+                if item.content_type == 'pizza' and not pizza_free:
                     pizza_free = True
-                elif item.menu_item.type == 'drink' and not drink_free:
-                    self.total_price -= item.menu_item.price
+                elif item.content_type == 'drink' and not drink_free:
                     drink_free = True
                 if pizza_free and drink_free:
                     self.customer.is_birthday_freebie = True
                     self.customer.save()
                     break
-            self.discount_applied = True
+            self.freebie_applied = True
 
     def calculate_estimated_delivery_time(self):
-        pizza_items = self.order_menu_items.filter(menu_item__type='pizza')
+        """Calculates estimated delivery time based on the number of pizzas ordered."""
+        pizza_items = self.items.filter(content_type='pizza')
         pizza_quantity = sum([item.quantity for item in pizza_items])
         self.estimated_delivery_time = pizza_quantity * 2 + 10
 
+    def calculate_total_price(self):
+        """
+        Calculate the total price, applying any discounts and freebies.
+        The most expensive pizza will be free if it's a birthday freebie.
+        """
+        total_price = Decimal('0.00')
+        pizzas = self.items.filter(content_type='pizza')
+
+        # Find the most expensive pizza
+        if pizzas.exists():
+            most_expensive_pizza = max(pizzas, key=lambda item: item.get_price())
+            if self.freebie_applied:
+                pizzas = pizzas.exclude(id=most_expensive_pizza.id)
+
+        for item in self.items.all():
+            total_price += item.get_price() * item.quantity
+
+        # Apply loyalty discount or discount code (10%)
+        if self.discount_applied:
+            total_price *= Decimal('0.9')
+
+        return round(total_price, 2)
 
     def add_menu_item(self, item, quantity):
-        # Determine item type and id
+        """Add an item (pizza, drink, or dessert) to the order."""
         if isinstance(item, Pizza):
             item_type = 'pizza'
             object_id = item.pizza_id
@@ -89,12 +110,14 @@ class Order(models.Model):
             order_item.save()
 
     def update_customer_pizza_count(self):
-        pizza_items = self.order_menu_items.filter(menu_item__type='pizza')
+        """Update the total number of pizzas ordered by the customer."""
+        pizza_items = self.items.filter(content_type='pizza')
         pizza_quantity = sum([item.quantity for item in pizza_items])
         self.customer.total_pizzas_ordered += pizza_quantity
         self.customer.save()
 
     def process_order(self):
+        """Process the order by applying discounts, freebies, calculating the delivery time, and confirming the order."""
         if self.status == 'open':
             self.apply_loyalty_discount()
             self.apply_discount_code()
@@ -107,30 +130,14 @@ class Order(models.Model):
             raise ValueError('Order is not open')
 
     def cancel_order_within_time(self):
+        """Allow the order to be canceled if it's within 5 minutes of order placement."""
         if self.order_date < datetime.now() + timedelta(minutes=5):
-            self.status = "cancelled"
+            self.status = "canceled"
             self.save()
             return True
         else:
             return False
 
-    def check_order_combinations(self):
-        ordersOfPastThreeMinsWithSameAddress = self.delivery.objects.filter(order_id__order_date__gte=datetime.now() - timedelta(minutes=3),
-                                                                            order__customer__address_line=Delivery.delivery_address)
-        for order in ordersOfPastThreeMinsWithSameAddress:
-            if order.delivery == self.delivery:
-                return
-
-            pizzas = OrderItem.objects.filter(order_id=order.order_id, content_type='pizza')
-            for pizza in pizzas:
-                if pizza.quantity + self.delivery.pizza_quantity > 3:
-                    return False
-
-                self.delivery.pizza_quantity += pizza.quantity
-
-            self.delivery.save()
-
-        return True
 
 
 
@@ -141,7 +148,7 @@ class OrderItem(models.Model):
         ('dessert', 'Dessert'),
     ]
 
-    order = models.ForeignKey('Order', on_delete=models.CASCADE, related_name='items')
+    order = models.ForeignKey('orders.Order', on_delete=models.CASCADE, related_name='items')
     content_type = models.CharField(max_length=50, choices=ITEM_TYPES)
     object_id = models.PositiveIntegerField()
     quantity = models.PositiveIntegerField(default=1)
