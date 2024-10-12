@@ -1,8 +1,9 @@
 # urls.py
 
 from django.urls import path
-from .views import FinalizeOrderView, EarningAPIView, GetOrderItemsView, OrderStatusView, OrderCancelView, \
-    AddItemToOrder, GetOrderItemCountView, OrderTotalPriceView, RemoveItemFromOrder, RedeemDiscountView
+from .views import FinalizeOrderView, EarningAPIView, GetOrderItemsView, OrderCancelView, \
+    AddItemToOrder, GetOrderItemCountView, OrderTotalPriceView, RemoveItemFromOrder, RedeemDiscountView, \
+    LatestOrderStatusView
 
 urlpatterns = [
     path('items/', GetOrderItemsView.as_view()),
@@ -13,6 +14,6 @@ urlpatterns = [
     path('redeem-discount/', RedeemDiscountView.as_view()),
     path('totalprice/', OrderTotalPriceView.as_view()),
     path('earnings/', EarningAPIView.as_view()),
-    path('<int:order_id>/status/', OrderStatusView.as_view()),
+    path('latest/', LatestOrderStatusView.as_view()),
     path('<int:order_id>/cancel/', OrderCancelView.as_view())
 ]

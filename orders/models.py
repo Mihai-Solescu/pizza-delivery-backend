@@ -186,7 +186,7 @@ class Order(models.Model):
         self.estimated_delivery_time = pizza_quantity * 2 + 10  # Example logic: 2 minutes per pizza + 10 minutes base time
 
     def cancel_order_within_time(self):
-        if self.order_date < datetime.now() + timedelta(minutes=5):
+        if self.order_date and self.order_date > datetime.now() - timedelta(minutes=5):
             self.status = "cancelled"
             self.save()
             return True
