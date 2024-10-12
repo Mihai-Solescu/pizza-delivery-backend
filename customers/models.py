@@ -18,9 +18,9 @@ class Customer(models.Model):
     discount_applied = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
 
-class UserPreferences(models.Model):
+class CustomerPreferences(models.Model):
     customer_preferences_id = models.AutoField(primary_key=True)
-    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='customer_profile1')
+    customer = models.OneToOneField(Customer, on_delete=models.CASCADE, related_name='customer_profile1')
 
     # Favourite Sauce (Encoded as integers)
     # 0: Tomato, 1: Pesto, 2: White Sauce
@@ -113,4 +113,3 @@ class CustomerData(models.Model):
 
     # A JSONField to store the average rating for each pizza
     avg_pizza_rating = models.JSONField(default=dict, help_text="Dictionary of pizzas and their average ratings")
-
