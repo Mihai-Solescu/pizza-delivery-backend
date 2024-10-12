@@ -1,6 +1,6 @@
 from django.contrib.auth.models import User
 from rest_framework import serializers
-from .models import Customer, CustomerPreferences, CustomerData
+from .models import Customer, UserPreferences, CustomerData
 
 class CustomerSerializer(serializers.ModelSerializer):
     class Meta:
@@ -8,9 +8,9 @@ class CustomerSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
-class CustomerPreferencesSerializer(serializers.ModelSerializer):
+class UserPreferencesSerializer(serializers.ModelSerializer):
     class Meta:
-        model = CustomerPreferences
+        model = UserPreferences
         fields = '__all__'
         read_only_fields = ('user',)
 
