@@ -1,7 +1,8 @@
 import os
 import json
 from django.core.management.base import BaseCommand
-from menu.models import Pizza, Drink, Dessert, Ingredient, PizzaIngredientLink
+from menu.models import Pizza, Drink, Dessert, Ingredient, PizzaIngredientLink, IngredientFilters
+
 
 class Command(BaseCommand):
     help = 'Load menu data from JSON files into the database'
@@ -14,6 +15,7 @@ class Command(BaseCommand):
         pizza_ingredients_file = os.path.join(base_dir, 'pizza_ingredient_links.json')
         drinks_file = os.path.join(base_dir, 'drinks.json')
         desserts_file = os.path.join(base_dir, 'desserts.json')
+        ingredient_filters_file = os.path.join(base_dir, 'ingredient_filters.json')
 
         # Load the data from the JSON files
         self.load_pizzas(pizzas_file)
@@ -21,6 +23,7 @@ class Command(BaseCommand):
         self.load_pizza_ingredients(pizza_ingredients_file)
         self.load_drinks(drinks_file)
         self.load_desserts(desserts_file)
+        self.load_ingredient_filters(ingredient_filters_file)
 
     def load_pizzas(self, file_path):
         with open(file_path, 'r') as f:
@@ -77,3 +80,22 @@ class Command(BaseCommand):
                 )
                 if created:
                     self.stdout.write(self.style.SUCCESS(f"Dessert '{dessert.name}' created"))
+
+    def load_ingredient_filters(self, file_path):
+        with open(file_path, 'r') as f:
+            ingredient_filters = json.load(f)
+            for filter_data in ingredient_filters:
+                ingredient = Ingredient.objects.get(name=filter_data['ingredient_name'])
+                filters, created = IngredientFilters.objects.get_or_create(
+                    ingredient=ingredient,
+                    is_vegan=filter_data['is_vegan'],
+                    is_vegetarian=filter_data['is_vegetarian'],
+                    spicy=filter_data['spicy'],
+                    is_meat=filter_data['is_meat'],
+                    is_vegetable=filter_data['is_vegetable'],
+                    cheesy=filter_data['cheesy'],
+                    sweet=filter_data['sweet'],
+                    salty=filter_data['salty']
+                )
+                if created:
+                    self.stdout.write(self.style.SUCCESS(f"Filters for Ingredient '{ingredient.name}' created"))

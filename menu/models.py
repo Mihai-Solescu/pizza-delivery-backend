@@ -54,6 +54,17 @@ class Ingredient(models.Model):
     is_vegan = models.BooleanField(default=False)
     is_vegetarian = models.BooleanField(default=False)
 
+class IngredientFilters(models.Model):
+    ingredient = models.OneToOneField(Ingredient, on_delete=models.CASCADE)
+    is_vegan = models.DecimalField(decimal_places=3, max_digits=8)
+    is_vegetarian = models.DecimalField(decimal_places=3, max_digits=8)
+    spicy = models.DecimalField(decimal_places=3, max_digits=8)
+    is_meat = models.DecimalField(decimal_places=3, max_digits=8)
+    is_vegetable = models.DecimalField(decimal_places=3, max_digits=8)
+    cheesy = models.DecimalField(decimal_places=3, max_digits=8)
+    sweet = models.DecimalField(decimal_places=3, max_digits=8)
+    salty = models.DecimalField(decimal_places=3, max_digits=8)
+
 class PizzaIngredientLink(models.Model):
     pizza = models.ForeignKey(Pizza, on_delete=models.CASCADE)
     ingredient = models.ForeignKey(Ingredient, on_delete=models.CASCADE)
