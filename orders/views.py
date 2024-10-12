@@ -43,9 +43,9 @@ class GetOrderItemsView(APIView):
                 desserts.append({'dessert': DessertSerializer(dessert, many=False, context={'request' : request}).data, 'quantity': item.quantity})
 
         return Response({
-            'pizzas': pizzas,
-            'drinks': drinks,
-            'desserts': desserts,
+            'pizza': pizzas,
+            'drink': drinks,
+            'dessert': desserts,
         }, status=status.HTTP_200_OK)
 
 class GetOrderItemCountView(APIView):

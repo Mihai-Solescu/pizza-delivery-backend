@@ -79,6 +79,8 @@ class Order(models.Model):
         pizzas = []
 
         items = self.items.all()
+        if(items.count() == 0):
+            return total_price
         for item in items:
             if str(item.content_type) == 'Menu | pizza':
                 total_price += item.content_object.get_price() * item.quantity
@@ -111,6 +113,22 @@ class Order(models.Model):
         if not created:
             order_item.quantity += quantity
             order_item.save()
+
+    def remove_menu_item(self, item, quantity):
+        content_type = ContentType.objects.get_for_model(item.__class__)
+        object_id = item.id
+
+        order_item = OrderItem.objects.get(
+            order=self,
+            content_type=content_type,
+            object_id=object_id
+        )
+
+        if order_item.quantity > quantity:
+            order_item.quantity -= quantity
+            order_item.save()
+        else:
+            order_item.delete()
 
     def update_customer_pizza_count(self):
         pizza_items = OrderItem.objects.filter(order=self, content_type='pizza')
