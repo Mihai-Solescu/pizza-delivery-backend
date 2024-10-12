@@ -1,31 +1,40 @@
-from datetime import timezone
-
-from django.shortcuts import render
-from rest_framework import status
-from rest_framework.response import Response
 from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
+from .models import Order, DeliveryPerson
+from .serializers import OrderSerializer
+from django.utils import timezone
+from datetime import timedelta
 
-from .models import Delivery, DeliveryPerson
-from .serializers import DeliverySerializer
+class OrderStatusView(APIView):
+    def get(self, request, order_id):
+        try:
+            order = Order.objects.get(pk=order_id)
+            serializer = OrderSerializer(order)
+            print(serializer.data)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        except Order.DoesNotExist:
+            return Response({'error': 'Order does not exist'}, status=status.HTTP_404_NOT_FOUND)
 
+class CancelOrderView(APIView):
+    def post(self, request, order_id):
+        try:
+            order = Order.objects.get(pk=order_id)
+            if order.cancel_order_within_time():
+                return Response({'message': 'Order cancelled successfully'}, status=status.HTTP_200_OK)
+            else:
+                return Response({'error': 'Cancellation window has passed'}, status=status.HTTP_400_BAD_REQUEST)
+        except Order.DoesNotExist:
+            return Response({'error': 'Order does not exist'}, status=status.HTTP_404_NOT_FOUND)
 
-#to be tested...
-class DeliveryStatusView():
-    def get(self, request):
-        delivery_status = Delivery.objects.get(pk=request.query_params.get('delivery_id')).delivery_status
-        return Response({'status': delivery_status}, status=status.HTTP_200_OK)
-
+class PlaceOrderView(APIView):
     def post(self, request):
-        delivery = Delivery.objects.get(pk=request.data.get('delivery_id'))
-        canceled = request.data.get('canceled')
-        if canceled:
-            delivery.delivery_status = 'Canceled'
-            delivery.save()
-            return Response({'status': delivery.delivery_status}, status=status.HTTP_200_OK)
-        elif request.data.get('delivered'):
-            delivery.delivery_status = 'Delivered'
-            delivery.save()
-            return Response({'status': delivery.delivery_status}, status=status.HTTP_200_OK)
+        # Assuming order data is sent in the request body
+        serializer = OrderSerializer(data=request.data)
+        if serializer.is_valid():
+            order = serializer.save()
+            # Assign delivery and handle grouping
+            order.create_or_update_delivery()
+            return Response(OrderSerializer(order).data, status=status.HTTP_201_CREATED)
         else:
-            return Response({'error': 'Invalid request'}, status=status.HTTP_400_BAD_REQUEST)
-
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
