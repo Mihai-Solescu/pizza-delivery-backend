@@ -49,7 +49,7 @@ class Dessert(models.Model):
 
 class Ingredient(models.Model):
     id = models.AutoField(primary_key=True)
-    name = models.CharField(max_length=30)
+    name = models.CharField(max_length=30, unique=True)
     cost = models.DecimalField(decimal_places=3, max_digits=8)
     is_vegan = models.BooleanField(default=False)
     is_vegetarian = models.BooleanField(default=False)

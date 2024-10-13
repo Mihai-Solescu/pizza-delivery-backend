@@ -8,6 +8,7 @@ from django.contrib.contenttypes.models import ContentType
 import numpy as np
 
 from orders.models import OrderItem
+from orders.recommender import update_preferences_review_decay
 from .models import Pizza, Ingredient, Dessert, Drink, UserPizzaTag, PizzaIngredientLink, UserPizzaRating
 from .serializers import PizzaSerializer, IngredientSerializer, DessertSerializer, DrinkSerializer
 from decimal import Decimal
@@ -288,6 +289,9 @@ class PizzaUserRatingView(APIView):
 
         # Get data from the request
         rating = request.data.get('rating', False)
+
+        # Update user preferences
+        update_preferences_review_decay(user, pizza, rating)
 
         # Update the tags
         user_pizza_rating.rating = rating
