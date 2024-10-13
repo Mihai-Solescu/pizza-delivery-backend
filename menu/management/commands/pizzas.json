@@ -3,5 +3,12 @@
     {"id": 2, "name": "Pepperoni"},
     {"id": 3, "name": "BBQ Chicken"},
     {"id": 4, "name": "Vegetarian"},
-    {"id": 5, "name": "Hawaiian"}
+    {"id": 5, "name": "Hawaiian"},
+    {"id": 6, "name":  "Mushroom-Ham"},
+    {"id": 7, "name":  "Meaty"},
+    {"id": 8, "name":  "BBQ Pepperoni"},
+    {"id": 9, "name": "Mushroom Pizza"},
+    {"id":  10, "name":  "Veggie Delight"},
+    {"id":  11, "name":  "Spicy Jalapeno Fiesta"},
+    {"id":  12, "name":  "Garlic Parmesan Special"}
 ]
