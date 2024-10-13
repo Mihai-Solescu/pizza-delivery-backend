@@ -7,39 +7,45 @@ from .models import Pizza, Ingredient
 weight = 0.25 # Decay factor for exponential decay
 
 def get_user_preference_vector(user):
-    customer = user.customer_profile
-    ingredient_preferences = [
-        customer.pepperoni,
-        customer.mushrooms,
-        customer.onions,
-        customer.olives,
-        customer.sun_dried_tomatoes,
-        customer.bell_peppers,
-        customer.chicken,
-        customer.bacon,
-        customer.ham,
-        customer.sausage,
-        customer.ground_beef,
-        customer.anchovies,
-        customer.pineapple,
-        customer.basil,
-        customer.broccoli,
-        customer.zucchini,
-        customer.garlic,
-        customer.jalapenos,
-        customer.BBQ_sauce,
-        customer.red_peppers,
-        customer.spinach,
-        customer.feta_cheese,
-    ]
-    other_preferences = [
-        customer.cheese_preference,
-        customer.spiciness_level,
-        customer.is_vegetarian,
-        customer.is_vegan,
-        customer.pizza_size,
-    ]
-    return np.array(ingredient_preferences), other_preferences
+    preferences = CustomerPreferences.objects.get(user)
+    ingredients = {
+        'Tomato Sauce': preferences.tomato_sauce,
+        'Cheese': preferences.cheese,
+        'Pepperoni': preferences.pepperoni,
+        'BBQ Sauce': preferences.BBQ_sauce,
+        'Chicken': preferences.chicken,
+        'Pineapple': preferences.pineapple,
+        'Ham': preferences.ham,
+        'Mushrooms': preferences.mushrooms,
+        'Olives': preferences.olives,
+        'Onions': preferences.onions,
+        'Bacon': preferences.bacon,
+        'Jalapenos': preferences.jalapenos,
+        'Spinach': preferences.spinach,
+        'Feta Cheese': preferences.feta_cheese,
+        'Red Peppers': preferences.red_peppers,
+        'Garlic': preferences.garlic,
+        'Parmesan': preferences.parmesan,
+        'Sausage': preferences.sausage,
+        'Anchovies': preferences.anchovies,
+        'Basil': preferences.basil,
+        'Broccoli': preferences.broccoli,
+        'Mozzarella': preferences.mozzarella,
+        'Ground Beef': preferences.ground_beef,
+        'Zucchini': preferences.zucchini,
+        'Sun-dried Tomatoes': preferences.sun_dried_tomatoes
+    }
+    filters = {
+        'spicy': preferences.spicy,
+        'is_vegetarian': preferences.is_vegetarian,
+        'is_vegan': preferences.is_vegan,
+        'is_meat': preferences.is_meat,
+        'is_vegetable': preferences.is_vegetable,
+        'cheesy': preferences.cheesy,
+        'sweet': preferences.sweet,
+        'salty': preferences.salty
+    }
+    return ingredients, filters
 
 def get_pizza_vector(pizza):
     ingredient_ids = pizza.ingredients.values_list('id', flat=True)
