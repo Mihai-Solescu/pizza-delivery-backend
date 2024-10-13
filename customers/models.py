@@ -24,23 +24,6 @@ class CustomerPreferences(models.Model):
     customer_preferences_id = models.AutoField(primary_key=True)
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='customer_profile1')
 
-    # Favourite Sauce (Encoded as integers)
-    # 0: Tomato, 1: Pesto, 2: White Sauce
-    favourite_sauce = models.IntegerField(choices=[
-        (0, 'Tomato'),
-        (1, 'Pesto'),
-        (2, 'White Sauce')
-    ])
-
-    # Cheese Preference (Encoded as integers)
-    # 0: Mozzarella, 1: Cheddar, 2: No Cheese, 3: Vegan Cheese
-    cheese_preference = models.IntegerField(choices=[
-        (0, 'Mozzarella'),
-        (1, 'Cheddar'),
-        (2, 'No Cheese'),
-        (3, 'Vegan Cheese')
-    ])
-
     # Preferred Toppings (Binary flags for each topping)
     # 1 if liked, 0 neutral, -1 dislike
     pepperoni = models.IntegerField(default=0)
@@ -66,26 +49,15 @@ class CustomerPreferences(models.Model):
     spinach = models.IntegerField(default=0)
     feta_cheese = models.IntegerField(default=0)
 
-    # Spiciness Level (Encoded as integers)
-    # 0: Mild, 1: Medium, 2: Spicy
-    spiciness_level = models.IntegerField(choices=[
-        (0, 'Mild'),
-        (1, 'Medium'),
-        (2, 'Spicy')
-    ])
-
-    # Dietary Restrictions (Binary flags)
-    # 1 if applicable, 0 otherwise
+    # filters
+    spicy = models.DecimalField(decimal_places=3, max_digits=8)
     is_vegetarian = models.BooleanField(default=False)
     is_vegan = models.BooleanField(default=False)
-
-    # Pizza Size (Encoded as integers)
-    # 0: Small, 1: Medium, 2: Large
-    pizza_size = models.IntegerField(choices=[
-        (0, 'Small'),
-        (1, 'Medium'),
-        (2, 'Large')
-    ])
+    is_meat = models.DecimalField(decimal_places=3, max_digits=8)
+    is_vegetable = models.DecimalField(decimal_places=3, max_digits=8)
+    cheesy = models.DecimalField(decimal_places=3, max_digits=8)
+    sweet = models.DecimalField(decimal_places=3, max_digits=8)
+    salty = models.DecimalField(decimal_places=3, max_digits=8)
 
     # Budget Range (Use numeric ranges or midpoints for similarity calculations)
     budget_range = models.FloatField(default=7.0)# Ensure unique user-pizza combinations
