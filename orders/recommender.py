@@ -3,7 +3,7 @@ from django.contrib.auth.models import User
 
 from customers.models import CustomerPreferences
 from menu.models import PizzaIngredientLink
-from .models import Pizza, Ingredient
+from .models import Pizza
 
 weight = 0.25 # Decay factor for exponential decay
 toppings_keys = [
