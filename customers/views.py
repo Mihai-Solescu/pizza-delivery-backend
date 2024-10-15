@@ -94,23 +94,26 @@ class CustomerPreferencesView(APIView):
 
             # Prepare the response
             response_data = {
-                'favourite_sauce': serializer.data['favourite_sauce'],
-                'cheese_preference': serializer.data['cheese_preference'],
-                'spiciness_level': serializer.data['spiciness_level'],
+                'spicy': serializer.data['spicy'],
                 'is_vegetarian': serializer.data['is_vegetarian'],
                 'is_vegan': serializer.data['is_vegan'],
-                'pizza_size': serializer.data['pizza_size'],
+                'is_meat': serializer.data['is_meat'],
+                'is_vegetable': serializer.data['is_vegetable'],
+                'cheesy': serializer.data['cheesy'],
+                'sweet': serializer.data['sweet'],
+                'salty': serializer.data['salty'],
                 'budget_range': serializer.data['budget_range'],
                 'toppings': []  # Initialize toppings list
             }
 
             # Populate the toppings list with keys and values
             toppings_keys = [
-                'pepperoni', 'mushrooms', 'onions', 'olives', 'sun_dried_tomatoes',
-                'bell_peppers', 'chicken', 'bacon', 'ham', 'sausage',
-                'ground_beef', 'anchovies', 'pineapple', 'basil',
-                'broccoli', 'zucchini', 'garlic', 'jalapenos',
-                'BBQ_sauce', 'red_peppers', 'spinach', 'feta_cheese'
+                'tomato_sauce', 'cheese', 'pepperoni', 'BBQ_sauce', 'chicken',
+                'pineapple', 'ham', 'mushrooms', 'olives', 'onions',
+                'bacon', 'jalapenos', 'spinach', 'feta_cheese', 'red_peppers',
+                'garlic', 'parmesan', 'sausage', 'anchovies', 'basil',
+                'broccoli', 'mozzarella', 'ground_beef', 'zucchini',
+                'sun_dried_tomatoes'
             ]
 
             for topping in toppings_keys:
@@ -134,25 +137,29 @@ class CustomerPreferencesView(APIView):
             data = json.loads(request.body)
 
             # Extract data
-            favourite_sauce = data.get('favourite_sauce', 0)
-            cheese_preference = data.get('cheese_preference', 0)
             toppings = data.get('toppings', {})
-            spiciness_level = data.get('spiciness_level', 0)
+            spicy = data.get('spicy', 0.5)
+            is_meat = data.get('is_meat', 0.5)
+            is_vegetable = data.get('is_vegetable', 0.5)
+            cheesy = data.get('cheesy', 0.5)
+            sweet = data.get('sweet', 0.5)
+            salty = data.get('salty', 0.5)
             is_vegetarian = data.get('is_vegetarian', False)
             is_vegan = data.get('is_vegan', False)
-            pizza_size = data.get('pizza_size', 1)
             budget_range = data.get('budget_range', 7.00)
 
             # Update or create user preferences
             preferences, created = CustomerPreferences.objects.update_or_create(
                 user=request.user,
                 defaults={
-                    'favourite_sauce': favourite_sauce,
-                    'cheese_preference': cheese_preference,
-                    'spiciness_level': spiciness_level,
+                    'spicy': spicy,
+                    'is_meat': is_meat,
+                    'is_vegetable': is_vegetable,
+                    'cheesy': cheesy,
+                    'sweet': sweet,
+                    'salty': salty,
                     'is_vegetarian': is_vegetarian,
                     'is_vegan': is_vegan,
-                    'pizza_size': pizza_size,
                     'budget_range': budget_range,
                     # Update toppings from the data
                     **{f"{topping}": toppings.get(topping, 0) for topping in toppings}
