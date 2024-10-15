@@ -1,7 +1,19 @@
-import time
-from datetime import datetime, timedelta, timezone
+# delivery/models.py
 
 from django.db import models
+from django.utils import timezone
+from datetime import timedelta
+
+class DeliveryPerson(models.Model):
+    delivery_person_id = models.AutoField(primary_key=True)
+    name = models.CharField(max_length=30)
+    last_dispatched = models.DateTimeField(null=True, blank=True)
+    postal_area = models.CharField(max_length=30)
+
+    def delivery_person_is_available(self):
+        if self.last_dispatched is None:
+            return True
+        return self.last_dispatched + timedelta(minutes=30) <= timezone.now()
 
 class Delivery(models.Model):
     delivery_id = models.AutoField(primary_key=True)
@@ -9,8 +21,14 @@ class Delivery(models.Model):
         ('pending', 'Pending'),
         ('in_process', 'In Process'),
         ('completed', 'Completed'),
+        ('no_courier', 'No Courier'),
     ]
-    delivery_person_id = models.ForeignKey('delivery.DeliveryPerson', on_delete=models.SET_NULL, related_name="deliveries", null=True) #We want to access this from the DeliveryPerson
+    delivery_person = models.ForeignKey(
+        'DeliveryPerson',
+        on_delete=models.SET_NULL,
+        related_name="deliveries",
+        null=True
+    )
     delivery_status = models.CharField(
         max_length=20,
         choices=STATUS_CHOICES,
@@ -18,6 +36,8 @@ class Delivery(models.Model):
     )
     pizza_quantity = models.IntegerField(default=0)
     delivery_postal_code = models.CharField(max_length=100)
+    delivery_address = models.CharField(max_length=255)
+    created_at = models.DateTimeField(auto_now_add=True, null=True, blank=True)
 
     def save(self, *args, **kwargs):
         if self.delivery_status == 'in_process' and self.delivery_person:
@@ -35,19 +55,8 @@ class Delivery(models.Model):
 
         if available_delivery_persons.exists():
             self.delivery_person = available_delivery_persons.first()
+            self.delivery_status = 'in_process'
             self.save()
             return True
         else:
             return False
-
-class DeliveryPerson(models.Model):
-    delivery_person_id = models.AutoField(primary_key=True)
-    name = models.CharField(max_length=30)
-    last_dispatched = models.DateTimeField(null=True, blank=True)
-    postal_area = models.CharField(max_length=30)
-
-    def delivery_person_is_available(self):
-        if self.last_dispatched is None:
-            return True
-        return self.last_dispatched + timedelta(minutes=30) <= timezone.now()
-

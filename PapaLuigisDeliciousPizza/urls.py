@@ -29,7 +29,7 @@ urlpatterns = [
     path('customers/', include('customers.urls')),
     path('orders/', include('orders.urls')),
     path('menu/', include('menu.urls')),
-    path('api/delivery/', include('delivery.urls')),
+    path('delivery/', include('delivery.urls')),
 
 # API visualisation!
    path('schema/', SpectacularAPIView.as_view(), name='schema'),
