@@ -13,7 +13,7 @@ from orders.models import OrderItem
 from orders.recommender import update_preferences_review_decay, toppings_keys
 from .models import Pizza, Ingredient, Dessert, Drink, UserPizzaTag, PizzaIngredientLink, UserPizzaRating
 from .serializers import PizzaSerializer, IngredientSerializer, DessertSerializer, DrinkSerializer
-from decimal import Decimal
+from decimal import Decimal, InvalidOperation
 
 
 class PizzaListViewSet(APIView):
@@ -28,10 +28,14 @@ class PizzaListViewSet(APIView):
         is_vegan = request.query_params.get('is_vegan', None)
 
         # Dynamically handle toppings preferences as a vector
-        toppings_list = ['pepperoni', 'mushrooms', 'onions', 'olives', 'sun_dried_tomatoes',
-                         'bell_peppers', 'chicken', 'bacon', 'ham', 'sausage', 'ground_beef',
-                         'anchovies', 'pineapple', 'basil', 'broccoli', 'zucchini', 'garlic',
-                         'jalapenos', 'BBQ_sauce', 'red_peppers', 'spinach', 'feta_cheese']
+        toppings_list = [
+            'tomato_sauce', 'cheese', 'pepperoni', 'BBQ_sauce', 'chicken',
+            'pineapple', 'ham', 'mushrooms', 'olives', 'onions',
+            'bacon', 'jalapenos', 'spinach', 'feta_cheese', 'red_peppers',
+            'garlic', 'parmesan', 'sausage', 'anchovies', 'basil',
+            'broccoli', 'mozzarella', 'ground_beef', 'zucchini',
+            'sun_dried_tomatoes'
+        ]
 
         # Initialize preferences vector with 0 (neutral)
         preferences_vector = np.zeros(len(toppings_list))
@@ -39,7 +43,13 @@ class PizzaListViewSet(APIView):
         # Populate the preferences vector based on query params (-1: dislike, 0: neutral, 1: like)
         for index, topping in enumerate(toppings_list):
             if topping in request.query_params:
-                preferences_vector[index] = int(request.query_params.get(topping))
+                # Convert the value from query params to a Decimal before storing it in the preferences_vector
+                try:
+                    value = Decimal(request.query_params.get(topping))
+                    preferences_vector[index] = value
+                except (TypeError, ValueError, InvalidOperation):
+                    # If the conversion fails, set the value to a neutral (0) as a fallback
+                    preferences_vector[index] = Decimal(0)
 
         print(preferences_vector)
 
@@ -293,9 +303,7 @@ class PizzaUserRatingView(APIView):
         rating = request.data.get('rating', False)
 
         # Update user preferences
-        ingredient_preferences, filters, max_budget = update_preferences_review_decay(user, pizza, rating)
-        print (ingredient_preferences)
-        save_preferences(user, ingredient_preferences, filters, max_budget)
+        update_preferences_review_decay(user, pizza, rating)
 
         # Update the tags
         user_pizza_rating.rating = rating
@@ -308,31 +316,6 @@ class PizzaUserRatingView(APIView):
         }
 
         return Response(response_data, status=status.HTTP_200_OK)
-
-
-def save_preferences(user, ingredients, filters, max_budget):
-    try:
-        # Assuming 'ingredients' is now correctly mapped
-        ingredients_dict = {topping: ingredients[i] for i, topping in enumerate(toppings_keys)}
-
-        # Attempt to update or create the customer preferences
-        preferences, created = CustomerPreferences.objects.update_or_create(
-            user=user,
-            defaults={
-                **ingredients_dict,  # Use the converted dictionary
-                **{f"{filter_key}": filters[filter_key] for filter_key in filters},
-                'budget_range': max_budget
-            }
-        )
-
-        # Log whether the preferences were created or updated
-        if created:
-            print(f"Preferences created for user {user}")
-        else:
-            print(f"Preferences updated for user {user}")
-
-    except Exception as e:
-        print(f"Error saving preferences: {str(e)}")
 
 class IngredientListView(APIView):
     permission_classes = [permissions.AllowAny]

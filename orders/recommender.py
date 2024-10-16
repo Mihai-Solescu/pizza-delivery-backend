@@ -1,3 +1,5 @@
+from decimal import Decimal
+
 import numpy as np
 from django.contrib.auth.models import User
 
@@ -48,29 +50,17 @@ def recommend_pizzas(user, top_n=5):
 
 def update_preferences_review_decay(user, pizza, rating):
     ingredients, filters, max_budget = get_user_preferences(user)
-    old_preferences = np.array(list(ingredients.values()))
+    old_preferences = [Decimal(value) for value in ingredients.values()]
     pizza_vector = get_pizza_vector(pizza)
-    a = (rating - 3) / 2 # normalize [1, 5] to [-1, 1]
-    new_preferences = old_preferences + a * pizza_vector
-    ingredient_preferences = weight * new_preferences + (1 - weight) * old_preferences # exponential decay
-
-    # print (ingredients)
-    # print (pizza_vector)
-    # print (new_preferences)
-    # print (ingredient_preferences)
-
-    for i, topping in enumerate(toppings_keys):
-        ingredients[topping] = ingredient_preferences[i]
-
-    return ingredient_preferences, filters, max_budget
-
-def update_preferences_unrated_decay (user, pizza, review_score):
-    preferences = CustomerPreferences.objects.get(user=user)
-    old_preferences = np.array(preferences.preferences)
-    pizza_vector = get_pizza_vector(pizza)
-    new_preferences = old_preferences + pizza_vector
-    preferences.preferences = weight * new_preferences + (1 - weight) * old_preferences # exponential decay
-    preferences.save()
+    pizza_vector = [Decimal(v) for v in pizza_vector]
+    a = Decimal((rating - 3) / 2)  # normalize [1, 5] to [-1, 1]
+    new_preferences = [(a * pizza_ing) for old_pref, pizza_ing in zip(old_preferences, pizza_vector)]
+    ingredient_preferences = [(Decimal(weight) * new_pref + (1 - Decimal(weight)) * old_pref)
+                              for new_pref, old_pref in zip(new_preferences, old_preferences)]
+    print(old_preferences)
+    print (new_preferences)
+    print (ingredient_preferences)
+    save_preferences(user, ingredient_preferences, filters, max_budget)
 
 def get_user_preferences(user):
     preferences = CustomerPreferences.objects.get(user=user)
@@ -114,3 +104,26 @@ def get_user_preferences(user):
     max_budget = preferences.budget_range
     return ingredients, filters, max_budget
 
+def save_preferences(user, ingredients, filters, max_budget):
+    try:
+        # Assuming 'ingredients' is now correctly mapped
+        ingredients_dict = {topping: ingredients[i] for i, topping in enumerate(toppings_keys)}
+
+        # Attempt to update or create the customer preferences
+        preferences, created = CustomerPreferences.objects.update_or_create(
+            user=user,
+            defaults={
+                **ingredients_dict,  # Use the converted dictionary
+                **{f"{filter_key}": filters[filter_key] for filter_key in filters},
+                'budget_range': max_budget
+            }
+        )
+
+        # Log whether the preferences were created or updated
+        if created:
+            print(f"Preferences created for user {user}")
+        else:
+            print(f"Preferences updated for user {user}")
+
+    except Exception as e:
+        print(f"Error saving preferences: {str(e)}")

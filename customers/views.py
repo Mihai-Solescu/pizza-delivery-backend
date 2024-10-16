@@ -7,8 +7,8 @@ from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 import json
 
-from customers.serializers import CustomerRegisterSerializer, CustomerPreferencesSerializer, CustomerDataSerializer
-from customers.models import CustomerPreferences, CustomerData, Customer
+from customers.serializers import CustomerRegisterSerializer, CustomerPreferencesSerializer
+from customers.models import CustomerPreferences, Customer
 
 
 class LoginView(APIView):
