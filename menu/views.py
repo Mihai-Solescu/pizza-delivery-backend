@@ -1,3 +1,4 @@
+from django.db import transaction
 from rest_framework.response import Response
 from rest_framework import permissions, status
 from rest_framework.views import APIView
@@ -7,8 +8,9 @@ from django.contrib.contenttypes.models import ContentType
 
 import numpy as np
 
+from customers.models import CustomerPreferences
 from orders.models import OrderItem
-from orders.recommender import update_preferences_review_decay
+from orders.recommender import update_preferences_review_decay, toppings_keys
 from .models import Pizza, Ingredient, Dessert, Drink, UserPizzaTag, PizzaIngredientLink, UserPizzaRating
 from .serializers import PizzaSerializer, IngredientSerializer, DessertSerializer, DrinkSerializer
 from decimal import Decimal
@@ -291,7 +293,9 @@ class PizzaUserRatingView(APIView):
         rating = request.data.get('rating', False)
 
         # Update user preferences
-        update_preferences_review_decay(user, pizza, rating)
+        ingredient_preferences, filters, max_budget = update_preferences_review_decay(user, pizza, rating)
+        print (ingredient_preferences)
+        save_preferences(user, ingredient_preferences, filters, max_budget)
 
         # Update the tags
         user_pizza_rating.rating = rating
@@ -306,6 +310,29 @@ class PizzaUserRatingView(APIView):
         return Response(response_data, status=status.HTTP_200_OK)
 
 
+def save_preferences(user, ingredients, filters, max_budget):
+    try:
+        # Assuming 'ingredients' is now correctly mapped
+        ingredients_dict = {topping: ingredients[i] for i, topping in enumerate(toppings_keys)}
+
+        # Attempt to update or create the customer preferences
+        preferences, created = CustomerPreferences.objects.update_or_create(
+            user=user,
+            defaults={
+                **ingredients_dict,  # Use the converted dictionary
+                **{f"{filter_key}": filters[filter_key] for filter_key in filters},
+                'budget_range': max_budget
+            }
+        )
+
+        # Log whether the preferences were created or updated
+        if created:
+            print(f"Preferences created for user {user}")
+        else:
+            print(f"Preferences updated for user {user}")
+
+    except Exception as e:
+        print(f"Error saving preferences: {str(e)}")
 
 class IngredientListView(APIView):
     permission_classes = [permissions.AllowAny]

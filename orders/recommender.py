@@ -62,7 +62,7 @@ def update_preferences_review_decay(user, pizza, rating):
     for i, topping in enumerate(toppings_keys):
         ingredients[topping] = ingredient_preferences[i]
 
-    save_preferences(user, ingredients, filters, max_budget)
+    return ingredient_preferences, filters, max_budget
 
 def update_preferences_unrated_decay (user, pizza, review_score):
     preferences = CustomerPreferences.objects.get(user=user)
@@ -113,20 +113,4 @@ def get_user_preferences(user):
     }
     max_budget = preferences.budget_range
     return ingredients, filters, max_budget
-
-from django.db import transaction
-
-@transaction.atomic
-def save_preferences(user, ingredients, filters, max_budget):
-    try:
-        CustomerPreferences.objects.update_or_create(
-            user=user,
-            defaults={
-                **{f"{topping}": ingredients[topping] for topping in toppings_keys},
-                **{f"{filter_key}": filters[filter_key] for filter_key in filters},
-                'budget_range': max_budget
-            }
-        )
-    except Exception as e:
-        print(f"Error saving preferences: {str(e)}")
 
