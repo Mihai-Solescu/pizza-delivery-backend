@@ -10,8 +10,9 @@ import numpy as np
 
 from customers.models import CustomerPreferences
 from orders.models import OrderItem
-from orders.recommender import update_preferences_review_decay, toppings_keys
-from .models import Pizza, Ingredient, Dessert, Drink, UserPizzaTag, PizzaIngredientLink, UserPizzaRating
+from orders.recommender import update_preferences_review_decay, toppings_keys, recommend_pizzas
+from .models import Pizza, Ingredient, Dessert, Drink, UserPizzaTag, PizzaIngredientLink, UserPizzaRating, \
+    IngredientFilters
 from .serializers import PizzaSerializer, IngredientSerializer, DessertSerializer, DrinkSerializer
 from decimal import Decimal, InvalidOperation
 
@@ -188,7 +189,6 @@ class PizzaListViewSet(APIView):
         # Return sorted pizzas
         return [pizza for pizza, score in sorted_pizzas]
 
-
 class PizzaUserTagsView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
@@ -283,6 +283,90 @@ class PizzaUserTagsView(APIView):
 
         return Response(response_data, status=status.HTTP_200_OK)
 
+class RuleBasedQuickTopPizzaView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request):
+        is_vegetarian = request.query_params.get('is_vegetarian', 'false').lower() == 'true'
+        is_vegan = request.query_params.get('is_vegan', 'false').lower() == 'true'
+        is_spicy = request.query_params.get('is_spicy', 'false').lower() == 'true'
+        is_cheesy = request.query_params.get('is_cheesy', 'false').lower() == 'true'
+        is_sweet = request.query_params.get('is_sweet', 'false').lower() == 'true'
+        is_salty = request.query_params.get('is_salty', 'false').lower() == 'true'
+        max_budget = Decimal(request.query_params.get('max_budget', 10))
+
+        # Get all pizzas
+        pizzas = Pizza.objects.all()
+
+        filtered_pizzas = []
+
+        # Filter pizzas based on ingredient properties
+        for pizza in pizzas:
+            ingredients = PizzaIngredientLink.objects.filter(pizza=pizza).select_related('ingredient')
+            pizza_price = pizza.get_price()
+
+            # Vegetarian and Vegan filters
+            if is_vegetarian:
+                if not all(i.ingredient.is_vegetarian for i in ingredients):
+                    continue  # Skip pizzas that are not fully vegetarian
+
+            if is_vegan:
+                if not all(i.ingredient.is_vegan for i in ingredients):
+                    continue  # Skip pizzas that are not fully vegan
+
+            # Apply the spiciness, cheesiness, sweetness, and saltiness filters
+            # if the filter is >= 0.5
+            matches_spicy = (is_spicy and any(IngredientFilters.objects.get(ingredient=i.ingredient).spicy >= 0.5 for i in ingredients)) \
+                #or (not is_spicy and all(IngredientFilters.objects.get(ingredient=i.ingredient).spicy < 0.5 for i in ingredients))
+            matches_cheesy = (is_cheesy and any(IngredientFilters.objects.get(ingredient=i.ingredient).cheesy >= 0.5 for i in ingredients)) \
+                #or (not is_cheesy and all(IngredientFilters.objects.get(ingredient=i.ingredient).cheesy < 0.5 for i in ingredients))
+            matches_sweet = (is_sweet and any(IngredientFilters.objects.get(ingredient=i.ingredient).sweet >= 0.5 for i in ingredients)) \
+                #or (not is_sweet and all(IngredientFilters.objects.get(ingredient=i.ingredient).sweet < 0.5 for i in ingredients))
+            matches_salty = (is_salty and any(IngredientFilters.objects.get(ingredient=i.ingredient).salty >= 0.5 for i in ingredients)) \
+                #or (not is_salty and all(IngredientFilters.objects.get(ingredient=i.ingredient).salty < 0.5 for i in ingredients))
+
+            # If the filter is true, the pizza must have at least one ingredient matching that property
+            if is_spicy and not matches_spicy:
+                continue
+            if is_cheesy and not matches_cheesy:
+                continue
+            if is_sweet and not matches_sweet:
+                continue
+            if is_salty and not matches_salty:
+                continue
+
+            # Check if pizza fits within the max budget
+            if pizza_price > max_budget:
+                continue
+
+            # If the pizza matches all filters, add it to the result
+            filtered_pizzas.append(pizza)
+
+        # order top_pizzas based on popularity
+        # where popularity is the number of times the pizza has been ordered
+        # and is computed by summing the quantity of all order items that contain the pizza
+        orders = OrderItem.objects.all()
+        # for each pizza in filtered_pizzas, get the total quantity ordered
+        # and sort the pizzas based on the total quantity ordered
+        top_popularity_pizzas = sorted(filtered_pizzas, key=lambda x: sum(
+            order.quantity for order in orders if order.content_type == ContentType.objects.get_for_model(Pizza) and order.object_id == x.id
+        ), reverse=True)
+        top_pizzas = top_popularity_pizzas[:3]
+
+        # Serialize the top pizzas
+        serializer = PizzaSerializer(top_pizzas, many=True, context={'request': request})
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+class RecommenderQuickTopPizzaView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request):
+        # yse the recommender to get the top 3 pizzas
+        top_pizzas = recommend_pizzas(request.user, top_n=3)
+
+        # Serialize the top pizzas
+        serializer = PizzaSerializer(top_pizzas, many=True, context={'request': request})
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 class PizzaUserRatingView(APIView):
     def post(self, request, pizza_id):

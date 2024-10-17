@@ -102,7 +102,7 @@ class CustomerPreferencesView(APIView):
                 'cheesy': serializer.data['cheesy'],
                 'sweet': serializer.data['sweet'],
                 'salty': serializer.data['salty'],
-                'budget_range': serializer.data['budget_range'],
+                'budget_range': serializer.data['max_budget'],
                 'toppings': []  # Initialize toppings list
             }
 

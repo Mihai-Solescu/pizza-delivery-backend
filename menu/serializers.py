@@ -43,6 +43,22 @@ class PizzaSerializer(serializers.ModelSerializer):
     def get_is_vegetarian(self, obj):
         return all(i.ingredient.is_vegetarian for i in self._get_ingredients(obj))
 
+    def get_rating(self, obj):
+        request = self.context.get('request', None)
+        if not request or not hasattr(request, 'user') or not request.user.is_authenticated:
+            return None
+
+        user = request.user
+
+        user_pizza_rating, created = UserPizzaRating.objects.get_or_create(
+            user=user,
+            pizza=obj,
+            defaults={
+                'rating': 3
+            }
+        )
+        return user_pizza_rating.rating
+
     def get_tags(self, obj):
         request = self.context.get('request', None)
         if not request or not hasattr(request, 'user') or not request.user.is_authenticated:
@@ -86,22 +102,6 @@ class PizzaSerializer(serializers.ModelSerializer):
             'vegetarian_tag': user_pizza_tag.vegetarian_tag,
             'vegan_tag': user_pizza_tag.vegan_tag,
         }
-
-    def get_rating(self, obj):
-        request = self.context.get('request', None)
-        if not request or not hasattr(request, 'user') or not request.user.is_authenticated:
-            return None
-
-        user = request.user
-
-        user_pizza_rating, created = UserPizzaRating.objects.get_or_create(
-            user=user,
-            pizza=obj,
-            defaults={
-                'rating': 3
-            }
-        )
-        return user_pizza_rating.rating
 
     def _get_ingredients(self, obj):
         return PizzaIngredientLink.objects.filter(pizza=obj).select_related('ingredient')

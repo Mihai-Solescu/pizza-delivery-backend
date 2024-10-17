@@ -12,6 +12,7 @@ import calendar
 from menu.models import Pizza, Drink, Dessert
 from menu.serializers import PizzaSerializer, DrinkSerializer, DessertSerializer
 from .models import Order, OrderItem
+from .recommender import update_preferences_order_decay
 
 
 class GetOrderItemsView(APIView):
@@ -140,6 +141,8 @@ class FinalizeOrderView(APIView):
             return Response({'error': 'No open order'}, status=status.HTTP_404_NOT_FOUND)
 
         order.process_order()
+        update_preferences_order_decay(user, order)
+
         return Response({
             'message': 'Order finalized.',
             'total_price': order.calculate_total_price(),

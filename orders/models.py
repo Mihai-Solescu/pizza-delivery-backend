@@ -32,9 +32,6 @@ class Order(models.Model):
     freebie_applied = models.BooleanField(default=False)
     estimated_delivery_time = models.IntegerField(blank=True, null=True, default=30)
 
-    class Meta:
-        unique_together = ('customer', 'status')  # Ensures only one open order per customer
-
     def __str__(self):
         return f"Order {self.id} by {self.customer}"
 
@@ -241,6 +238,20 @@ class Order(models.Model):
         order.delivery = self.delivery
         order.save()
         self.delivery.save()
+
+    def get_pizza_count(self, pizza):
+        """
+        Returns the quantity of the given pizza in the current order.
+        If the pizza is not in the order, it returns 0.
+        """
+        # Get the content type for Pizza
+        pizza_content_type = ContentType.objects.get_for_model(Pizza)
+
+        # Try to find the corresponding OrderItem in this order
+        order_item = self.items.filter(content_type=pizza_content_type, object_id=pizza.id).first()
+
+        # If the OrderItem exists, return its quantity; otherwise, return 0
+        return order_item.quantity if order_item else 0
 
 
 class OrderItem(models.Model):

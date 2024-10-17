@@ -63,5 +63,5 @@ class CustomerPreferences(models.Model):
     salty = models.DecimalField(decimal_places=3, max_digits=8)
 
     # Budget Range (Use numeric ranges or midpoints for similarity calculations)
-    budget_range = models.DecimalField(default=10, decimal_places=3, max_digits=8)
+    max_budget = models.DecimalField(default=10, decimal_places=3, max_digits=8)
 

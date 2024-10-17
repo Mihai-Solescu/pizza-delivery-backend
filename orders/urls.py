@@ -1,4 +1,6 @@
 from django.urls import path
+
+from menu.views import RuleBasedQuickTopPizzaView, RecommenderQuickTopPizzaView
 from .views import FinalizeOrderView, EarningAPIView, GetOrderItemsView, OrderCancelView, \
     AddItemToOrder, GetOrderItemCountView, OrderTotalPriceView, RemoveItemFromOrder, RedeemDiscountView, \
     LatestOrderStatusView, ConfirmedOrderPizzasAPIView
@@ -11,6 +13,8 @@ urlpatterns = [
     path('remove-item/', RemoveItemFromOrder.as_view()),
     path('redeem-discount/', RedeemDiscountView.as_view()),
     path('totalprice/', OrderTotalPriceView.as_view()),
+    path('quickrule/', RuleBasedQuickTopPizzaView.as_view()),
+    path('quickrecommend/', RecommenderQuickTopPizzaView.as_view()),
     path('earnings/', EarningAPIView.as_view()),
     path('latest/', LatestOrderStatusView.as_view()),
     path('<int:order_id>/cancel/', OrderCancelView.as_view()),
