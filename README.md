@@ -1,7 +1,7 @@
 ### How to Run the Application:
 
 Backend (Django):
-After cloning the repository, open the PapaLuigisDeliciousPizza folder in your preferred code environment.
+After cloning the repository, open the pizza-delivery-backend folder in your preferred code environment.
 Ensure you have Python installed and all required libraries by running.
 Start the server by running this command in the terminal:
 python manage.py runserver
@@ -18,7 +18,7 @@ Explore the App:
 Take some time to explore all the functionalities of the app. Once you’ve tried both the classic and quick ordering methods, and completed the tasks above, please close the app and answer the following questions.
 
 GitHub Links:
-Backend Repository: https://github.com/MrSumTing/PapaLuigisDeliciousPizza
+Backend Repository: https://github.com/Mihai-Solescu/pizza-delivery-backend
 Frontend Repository: https://github.com/Mihai-Solescu/pizza-delivery-frontend
 
 Create an Account:
